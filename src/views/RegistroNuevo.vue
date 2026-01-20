@@ -54,7 +54,7 @@ export default{
 <div class="flex flex-col">
 <label class=" font-Nunito text-sm text-slate-900 mb-2">Tipo de Empresa</label>
 <select v-model="selected_empresa" class=" p-2 border border-gray-200 rounded-xl placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10  ">
-<option value="" selected disabled>Selecciona tipo empresa</option>
+<option value="" selected disabled class=" font-Nunito text-sm placeholder:text-sm ">Selecciona tipo empresa</option>
 <option v-for="item in tip_empresa"  :key="item.value" :value="item.text" >{{ item.text }}</option>    
 </select>
 </div>
