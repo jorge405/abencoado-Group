@@ -25,6 +25,8 @@ export default{
             {value:'Beni',text:'Beni'},
             {value:'Pando',text:'Pando'}
         ],
+        actividad_s:'',
+        actividad_secundaria:[],
         flatpickrTimeConfig:{
             enableTime: true,
             noCalendar: true,
@@ -36,6 +38,13 @@ export default{
         selected_empresa:'',
         fecha_inscripcion:''
     }
+    },
+    methods:{
+        agregarActividad(){
+            if(this.actividad_s.trim()==='') return;
+            this.actividad_secundaria.push(this.actividad_s);
+            this.actividad_s='';
+        }
     },
     components:{
         flatPickr
@@ -65,6 +74,20 @@ export default{
 <div class="flex flex-col">
 <label class=" text-sm font-Nunito text-slate-900 mb-2">Nombre</label>     
 <input type="text" class=" rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder=" Ingresa nombre completo">        
+</div>
+</div>
+<div class="grid grid-cols-3 gap-x-2 mb-3">
+<div class=" flex flex-col">
+    <label class=" text-sm font-Nunito text-slate-900 mb-2">Nro testimonio</label>     
+    <input type="text" class=" rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder=" Ingresa nro notaria">
+</div>    
+<div class=" flex flex-col">
+    <label class=" text-sm font-Nunito text-slate-900 mb-2">Nro Poder</label>     
+    <input type="text" class=" rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder=" Ingresa nro poder">
+</div>
+<div class=" flex flex-col">
+    <label class=" text-sm font-Nunito text-slate-900 mb-2">Notaria</label>     
+    <input type="text" class=" rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder=" Ingresa la notaria">
 </div>
 </div>    
 <div class="grid grid-cols-3 gap-x-2 mb-4">
@@ -106,7 +129,7 @@ export default{
 <div class="flex flex-col">
 <label class=" font-Nunito text-sm text-slate-900 mb-2">Departamento</label>
 <select v-model="selected_empresa" class=" p-2 border border-gray-200 rounded-xl placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10  ">
-<option value="" selected disabled>Selecciona tipo empresa</option>
+<option value="" selected disabled>Selecciona el departamento</option>
 <option v-for="item in departamento"  :key="item.value" :value="item.text" >{{ item.text }}</option>    
 </select>
 </div>    
@@ -137,7 +160,36 @@ export default{
     <label class="text-sm font-Nunito text-slate-900 mb-2">Referencias</label>     
     <input type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder="referencias de la direccion">
 </div>
+<div class=" flex flex-col mt-4">
+    <label class="text-sm font-Nunito text-slate-900 mb-2">Actividad principal</label>     
+    <input type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder="actividad principal de la empresa">
+</div>
+<div class=" flex flex-col mt-4">
+    <label class="text-sm font-Nunito text-slate-900 mb-2">Actividad secundaria</label>
+    <div class=" flex flex-row space-x-2">
+        <input v-model="actividad_s" type="text" class=" w-3xl rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder="actividad secundaria de la empresa">
+        <button @click="agregarActividad" type="button" class=" bg-gray-300 w-20 p-2 rounded-xl"><span class=" inline-block"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><g fill="none" fill-rule="evenodd"><path d="m12.594 23.258l-.012.002l-.071.035l-.02.004l-.014-.004l-.071-.036q-.016-.004-.024.006l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.016-.018m.264-.113l-.014.002l-.184.093l-.01.01l-.003.011l.018.43l.005.012l.008.008l.201.092q.019.005.029-.008l.004-.014l-.034-.614q-.005-.019-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.003-.011l.018-.43l-.003-.012l-.01-.01z"/><path fill="#354745" d="M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4h4a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-4v4a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-4H5a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h4z"/></g></svg></span></button>
+    </div>
+    <div class=" mt-5 flex flex-row">
+        <ul class="grid grid-cols-2 gap-x-18">
+            <li class=" p-2 border-2 mb-2 border-gray-300 font-Nunito text-md w-sm rounded-lg" v-for="(item,index) in actividad_secundaria" :key="index">{{ item }}</li>
+        </ul>
+    </div>     
+    
+</div>
+<div class="flex flex-col mt-4">
+    <label class="text-sm font-Nunito text-slate-900 mb-2">Correo Electronico</label>     
+    <input type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder="ingrese correo electronico empresarial">
+    <p class=" text-slate-900 text-sm font-Nunito">Una vez ingresado su correo electronico se creara una contraseña que se mandara al correo ingresado</p>
+</div>
+<div class=" flex flex-row mt-4 space-x-1">
+<button class="bg-yellow-500 p-2 w-sm text-white font-Nunito text-md rounded-lg">Automatico</button>
+<button class="bg-yellow-500 p-2 w-sm text-white font-Nunito text-md rounded-lg">Manual</button>
+</div>
+<p class=" text-slate-900 text-sm font-Nunito">Selecciona si los procesos de contabilidad seran automaticos o manuales</p>
+
 </form>
+<button type="button" class="w-3xl bg-green-500 p-2 rounded-lg text-white mt-5 mb-5 font-Nunito">Reistrar Nuevo</button>
 </div>    
 <div class=" flex flex-col mt-20 ml-30">
     <img src="@/assets/fondoRegistro.svg" alt="registro" width="500px" height="500px"> 

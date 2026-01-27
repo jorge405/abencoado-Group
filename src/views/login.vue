@@ -1,9 +1,45 @@
 <script>
+import Swal from 'sweetalert2';
+import axios from 'axios';
 export default{
     name:'login',
+    data(){
+        return{
+            correo:'',
+            pass:''
+        }
+    },
     methods:{
         registroNuevo(){
             this.$router.push({name:'RegistroNuevo'});
+        },
+        async enviarLogin(){
+            try {
+               const responselogin = await axios.post('http://localhost:3000/abencoado/authUser',{
+                correo:this.correo,
+                pass:this.pass
+               }) 
+              
+               if (responselogin.data.estado==='error') {
+                Swal.fire({
+                    icon:'error',
+                    title:'Abencoado Group',
+                    text:'contraseña o usuario incorrecto'
+                })
+                this.correo='';
+                this.pass='';
+               }else if(responselogin.data.estado==='ok'){
+                Swal.fire({
+                    icon:'success',
+                    title:'Abencoado Group',
+                    text:'Bienvenido al sistema'
+                })
+                this.$router.push('/perfilEmpresa')
+               }
+            } catch (error) {
+                console.error('error en el servidor:', error);
+            }
+            
         }
     }
 }    
@@ -19,13 +55,13 @@ export default{
     <label class=" block font-Nunito text-sm text-slate-700">Nit</label>
     <input type="text" class=" p-2 rounded-xl border border-gray-200 w-lg placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="Nit ejemplo:68483849">
     <label class=" block font-Nunito text-sm text-slate-700">Usuario</label>
-    <input type="text" class=" p-2 rounded-xl border border-gray-200 w-lg placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder=" correo electronico @">
+    <input v-model="correo" type="text" class=" p-2 rounded-xl border border-gray-200 w-lg placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder=" correo electronico @">
     <label class=" block font-Nunito text-sm text-slate-700">Contraseña</label>
-    <input type="text" class=" p-2 rounded-xl border border-gray-200 w-lg placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder=" ingrese tu contraseña">
-    <button class=" bg-blue-600 rounded-lg p-2 w-lg text-white mt-5 cursor-pointer">Iniciar</button>
+    <input v-model="pass" type="text" class=" p-2 rounded-xl border border-gray-200 w-lg placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder=" ingrese tu contraseña">    
 </form>
+<button @click="enviarLogin" class=" bg-blue-600 rounded-lg p-2 w-lg text-white mt-5 ml-5 cursor-pointer">Iniciar</button>
 <div class=" flex flex-row mt-4 items-center justify-between ml-5 mr-10 mb-10">
-        <button @click="registroNuevo" class=" bg-green-600 rounded-lg py-2 px-6 text-white cursor-pointer">Registro Nuevo</button>
+        <button @click="registroNuevo" type="button" class=" bg-green-600 rounded-lg py-2 px-6 text-white cursor-pointer">Registro Nuevo</button>
         <a href="#" class="fon-Nunito text-slate-800 ">Olvidaste tu Contraseña?</a>
 </div>
 </div>

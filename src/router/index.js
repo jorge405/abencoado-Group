@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import login from '../views/login.vue';
 import RegistroNuevo from '../views/RegistroNuevo.vue';
+import perfilEmpresa from '../views/perfilEmpresa.vue';
+import cotizaciones from '../views/cotizaciones.vue';
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -13,6 +15,16 @@ const router = createRouter({
       path:'/registroNuevo',
       name:'RegistroNuevo',
       component:RegistroNuevo
+    },
+    {
+      path:'/perfilEmpresa',
+      name:'perfilEmpresa',
+      component:perfilEmpresa,
+    },
+    {
+      path:'/cotizaciones',
+      name:'cotizaciones',
+      component:cotizaciones,
     }
     
   ],
