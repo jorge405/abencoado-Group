@@ -1,19 +1,15 @@
 <script>
 import flatPickr from 'vue-flatpickr-component'
 import 'flatpickr/dist/flatpickr.css'
+import axios from 'axios';
+import Swal from 'sweetalert2';
 
 export default{
 
     name:'RegistroNuevo',
     data(){
         return{
-        tip_empresa:[
-            {value:'Juridica',text:'Juridica'},
-            {value:'Sociedad de Responsabilidad Limitada (S.R.L)',text:'Sociedad de Responsabilidad Limitada (S.R.L)'},
-            {value:'Sociedad Anonima (S.A)',text:'Sociedad Anonima (S.A)'},
-            {value:'Sociedad de Economia Mixta',text:'Sociedad de Economia Mixta'},
-            {value:'Unipersonal',text:'Unipersonal'}
-        ],
+        tip_empresa:[],
         departamento:[
             {value:'La Paz',text:'La Paz'},
             {value:'Santa Cruz',text:'Santa Cruz'},
@@ -25,25 +21,186 @@ export default{
             {value:'Beni',text:'Beni'},
             {value:'Pando',text:'Pando'}
         ],
+        tipo_via:[
+            {value:'Avenida',text:'Avenida'},
+            {value:'Calle',text:'Calle'},
+            {value:'Carretera',text:'Carretera'},
+            {value:'Pasaje',text:'Pasaje'},
+            {value:'Calzada',text:'Calzada'},
+        ],
         actividad_s:'',
         actividad_secundaria:[],
         flatpickrTimeConfig:{
             enableTime: true,
             noCalendar: true,
             dateFormat: 'H:i',
-            time_24hr: false,
+            time_24hr: true,
             minuteIncrement: 1,
-            wrap: false,
+            wrap: false
         },
         selected_empresa:'',
-        fecha_inscripcion:''
+        fecha_inscripcion:'',
+        activeRazonSocial:false,
+        activeNombrePropietario:false,
+        razon_social:'',
+        nombre_propietario:'',
+        nro_testimonio:'',
+        nro_poder:'',
+        notaria:'',
+        nit:'',
+        direccion:'',
+        municipio:'',
+        zona:'',
+        selected_departamento:'',
+        via:'',
+        nombre_via:'',
+        nro_puerta:'',
+        referencias:'',
+        actividad_principal:'',
+        correo_electronico:'',
+        pass:''
     }
+    },
+    mounted(){
+        this.getTipoEmpresa();
     },
     methods:{
         agregarActividad(){
             if(this.actividad_s.trim()==='') return;
             this.actividad_secundaria.push(this.actividad_s);
             this.actividad_s='';
+        },
+        async getTipoEmpresa(){
+            try {
+                const responseTipoEmpresa= await axios.get('http://localhost:3000/abencoado/getTipEmpresa')
+                if (responseTipoEmpresa.data.estado==='error') {
+                    return this.tip_empresa=[];
+                }else if(responseTipoEmpresa.data.estado==='ok'){
+                    this.tip_empresa=responseTipoEmpresa.data.rows;
+                }
+            } catch (error) {
+                console.log('problemas al obtener tipo de empresa:', error)
+            }
+        },
+        async registroNuevo(){
+            try {
+                const datos={
+                    razon_social:this.razon_social,
+                    nombre_propietario:this.nombre_propietario,
+                    nro_testimonio:this.nro_testimonio,
+                    nro_poder:this.nro_poder,
+                    notaria:this.notaria,
+                    nit:this.nit,
+                    fecha_inscripcion:this.fecha_inscripcion,
+                    direccion:this.direccion,
+                    municipio:this.municipio,
+                    zona:this.zona,
+                    departamento:this.selected_departamento,
+                    tipo_via:this.via,
+                    nombre_via:this.nombre_via,
+                    nro_puerta:this.nro_puerta,
+                    referencias:this.referencias,
+                    actividad_principal:this.actividad_principal,
+                    cod_tpEmpresa:this.selected_empresa
+                } 
+                const responseRegistroNuevo= await axios.post('http://localhost:3000/abencoado/addEmpresa',datos) 
+                if (responseRegistroNuevo.data.estado==='error'){
+                    Swal.fire({
+                        icon:'error',
+                        title:'Registro no completado',
+                        text:'No se pudo completar el registro, por favor intente nuevamente'
+                    })
+                    return;
+                }
+                console.log(responseRegistroNuevo.data);
+                    const responseUsuario= await axios.post('http://localhost:3000/abencoado/addUser',{
+                        correo_electronico:this.correo_electronico,
+                        pass:this.pass,
+                        cod_tipUser:2,
+                        cod_empresa:responseRegistroNuevo.data.cod_empresa
+                    })
+                    if (responseUsuario.data.estado==='error') {
+                        Swal.fire({
+                            icon:'error',
+                            title:'Usuario no registrado',
+                            text:'No se pudo completar el registro del usuario, por favor intente nuevamente'
+                        })
+                        return;
+                    }
+                    
+                    const responseActividadSecundaria= await axios.post('http://localhost:3000/abencoado/addActividadSecundaria',{
+                        actividad_secundaria:this.actividad_secundaria
+                    })
+
+                    if (responseActividadSecundaria.data.estado==='error') {
+                        Swal.fire({
+                            icon:'error',
+                            title:'Abencoado Group',
+                            text:'actividad secundaria no registrado'
+                        })
+                        return;
+                    }
+
+                    const responseActividad= await axios.post('http://localhost:3000/abencoado/addActividades',{
+                        cod_empresa:responseRegistroNuevo.data.cod_empresa,
+                        cod_actividadSecundaria:responseActividadSecundaria.data.cod_actividadSecundaria
+                    })
+                    if (responseActividad.data.estado==='error') {
+                        Swal.fire({
+                            icon:'error',
+                            title:'Abencoado Group',
+                            text:'actividades no registrado'
+                        })
+                        return;
+                    }
+                    Swal.fire({
+                        icon:'success',
+                        title:'Registro completado',
+                        text:'El registro se completo con exito'
+                    })
+                    this.razon_social='';
+                    this.nombre_propietario='';
+                    this.nro_testimonio='';
+                    this.nro_poder='';
+                    this.notaria='';
+                    this.nit='';
+                    this.fecha_inscripcion='';
+                    this.direccion='';
+                    this.municipio='';
+                    this.zona='';
+                    this.selected_departamento='';
+                    this.via='';
+                    this.nombre_via='';
+                    this.nro_puerta='';
+                    this.referencias='';
+                    this.actividad_principal='';
+                    this.correo_electronico='';
+                    this.pass='';
+                    this.selected_empresa='';
+                    this.actividad_secundaria=[];
+                    this.activeRazonSocial=false;
+                    this.activeNombrePropietario=false;
+                this.$router.push('/');
+            } catch (error) {
+                console.log('problemas en el servidor: ',error)
+                Swal.fire({
+                    icon:'warning',
+                    title:'Error del servidor',
+                    text:'Por favor intente mas tarde'
+                });
+                return ;
+            }
+        }
+    },
+    watch:{
+        selected_empresa(newval){
+            if (newval===4) {
+                this.activeRazonSocial=true;
+                this.activeNombrePropietario=false;
+            }else{
+                this.activeRazonSocial=false;
+                this.activeNombrePropietario=true;
+            }
         }
     },
     components:{
@@ -64,30 +221,30 @@ export default{
 <label class=" font-Nunito text-sm text-slate-900 mb-2">Tipo de Empresa</label>
 <select v-model="selected_empresa" class=" p-2 border border-gray-200 rounded-xl placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10  ">
 <option value="" selected disabled class=" font-Nunito text-sm placeholder:text-sm ">Selecciona tipo empresa</option>
-<option v-for="item in tip_empresa"  :key="item.value" :value="item.text" >{{ item.text }}</option>    
+<option v-for="item in tip_empresa"  :key="item.cod_tpEmpresa" :value="item.cod_tpEmpresa" >{{ item.tipo_empresa }}</option>    
 </select>
 </div>
 <div class="flex flex-col">
 <label class=" text-sm font-Nunito text-slate-900 mb-2">Razon Social</label>     
-<input type="text" class=" rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder=" Ingresa la razon social de la empresa">
+<input v-model="razon_social" :disabled="activeRazonSocial" :class="activeRazonSocial ===true ?'bg-gray-300' : 'bg-transparent'" type="text" class=" rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder=" Ingresa la razon social de la empresa">
 </div>
 <div class="flex flex-col">
-<label class=" text-sm font-Nunito text-slate-900 mb-2">Nombre</label>     
-<input type="text" class=" rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder=" Ingresa nombre completo">        
+<label class=" text-sm font-Nunito text-slate-900 mb-2">Nombre Propietario/Representante Legal</label>     
+<input v-model="nombre_propietario"  type="text" class=" rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder=" Ingresa nombre completo">        
 </div>
 </div>
 <div class="grid grid-cols-3 gap-x-2 mb-3">
 <div class=" flex flex-col">
     <label class=" text-sm font-Nunito text-slate-900 mb-2">Nro testimonio</label>     
-    <input type="text" class=" rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder=" Ingresa nro notaria">
+    <input v-model="nro_testimonio" :disabled="activeRazonSocial" :class="activeRazonSocial===true ?'bg-gray-300' :'bg-transparent'" type="text" class=" rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder=" Ingresa nro notaria">
 </div>    
 <div class=" flex flex-col">
     <label class=" text-sm font-Nunito text-slate-900 mb-2">Nro Poder</label>     
-    <input type="text" class=" rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder=" Ingresa nro poder">
+    <input v-model="nro_poder" :disabled="activeRazonSocial" :class="activeRazonSocial===true ?'bg-gray-300' :'bg-transparent'" type="text" class=" rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder=" Ingresa nro poder">
 </div>
 <div class=" flex flex-col">
     <label class=" text-sm font-Nunito text-slate-900 mb-2">Notaria</label>     
-    <input type="text" class=" rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder=" Ingresa la notaria">
+    <input v-model="notaria" :disabled="activeRazonSocial" :class="activeRazonSocial===true ?'bg-gray-300' :'bg-transparent'" type="text" class=" rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder=" Ingresa la notaria">
 </div>
 </div>    
 <div class="grid grid-cols-3 gap-x-2 mb-4">
@@ -118,51 +275,16 @@ export default{
 </div>
 <div class="flex flex-col">
 <label class=" text-sm font-Nunito text-slate-900">Nit</label>
-<input type="text" class=" rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="ingresa tu Nit ej:786848353">    
+<input v-model="nit" type="text" class=" rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="ingresa tu Nit ej:786848353">    
 </div>
 <div class="flex flex-col">
 <label class=" text-sm font-Nunito text-slate-900">Direccion</label>
-<input type="text" class=" rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="ingresa tu direccion">
+<input v-model="direccion" type="text" class=" rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="ingresa tu direccion">
 </div>
 </div> 
-<div class="grid grid-cols-3 gap-x-2 mb-4">
-<div class="flex flex-col">
-<label class=" font-Nunito text-sm text-slate-900 mb-2">Departamento</label>
-<select v-model="selected_empresa" class=" p-2 border border-gray-200 rounded-xl placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10  ">
-<option value="" selected disabled>Selecciona el departamento</option>
-<option v-for="item in departamento"  :key="item.value" :value="item.text" >{{ item.text }}</option>    
-</select>
-</div>    
-<div class=" flex flex-col">
-<label class=" text-sm font-Nunito text-slate-900 mb-2">Municipio</label>     
-<input type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder=" Ingresa nombre completo">
-</div>
-<div class=" flex flex-col">
-<label class=" text-sm font-Nunito text-slate-900 mb-2">Tipo de division geografica</label>     
-<input type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder=" Ingresa nombre completo">
-</div>
-</div>
-<div class="grid grid-cols-3 gap-x-2">
-<div class=" flex flex-col">
-<label class=" text-sm font-Nunito text-slate-900 mb-2">Tipo de via</label>     
-<input type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder=" Ingresa nombre completo">
-</div>
-<div class="flex flex-col">
-<label class=" text-sm font-Nunito text-slate-900 mb-2">Nombre de la via</label>     
-<input type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder=" Ingresa nombre de la via">
-</div>
-<div class="flex flex-col">
-<label class=" text-sm font-Nunito text-slate-900 mb-2">Numero puerta</label>     
-<input type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder="numero de puerta">
-</div>
-</div>
-<div class=" flex flex-col mt-4">
-    <label class="text-sm font-Nunito text-slate-900 mb-2">Referencias</label>     
-    <input type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder="referencias de la direccion">
-</div>
 <div class=" flex flex-col mt-4">
     <label class="text-sm font-Nunito text-slate-900 mb-2">Actividad principal</label>     
-    <input type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder="actividad principal de la empresa">
+    <input v-model="actividad_principal" type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder="actividad principal de la empresa">
 </div>
 <div class=" flex flex-col mt-4">
     <label class="text-sm font-Nunito text-slate-900 mb-2">Actividad secundaria</label>
@@ -171,25 +293,73 @@ export default{
         <button @click="agregarActividad" type="button" class=" bg-gray-300 w-20 p-2 rounded-xl"><span class=" inline-block"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><g fill="none" fill-rule="evenodd"><path d="m12.594 23.258l-.012.002l-.071.035l-.02.004l-.014-.004l-.071-.036q-.016-.004-.024.006l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.016-.018m.264-.113l-.014.002l-.184.093l-.01.01l-.003.011l.018.43l.005.012l.008.008l.201.092q.019.005.029-.008l.004-.014l-.034-.614q-.005-.019-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.003-.011l.018-.43l-.003-.012l-.01-.01z"/><path fill="#354745" d="M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4h4a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-4v4a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-4H5a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h4z"/></g></svg></span></button>
     </div>
     <div class=" mt-5 flex flex-row">
-        <ul class="grid grid-cols-2 gap-x-18">
-            <li class=" p-2 border-2 mb-2 border-gray-300 font-Nunito text-md w-sm rounded-lg" v-for="(item,index) in actividad_secundaria" :key="index">{{ item }}</li>
+        <ul class="grid grid-cols-4 gap-x-5">
+            <li class=" p-2  border-2 mb-2 border-gray-300 font-Nunito text-md w-3sm rounded-lg" v-for="(item,index) in actividad_secundaria" :key="index">{{ item }}</li>
         </ul>
     </div>     
     
 </div>
-<div class="flex flex-col mt-4">
-    <label class="text-sm font-Nunito text-slate-900 mb-2">Correo Electronico</label>     
-    <input type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder="ingrese correo electronico empresarial">
-    <p class=" text-slate-900 text-sm font-Nunito">Una vez ingresado su correo electronico se creara una contraseña que se mandara al correo ingresado</p>
+<!-- division direccion de la empresa-->
+ <p class=" font-Nunito text-lg text-slate-900 mb-4">Direccion de la empresa</p>
+<div class="grid grid-cols-3 gap-x-2 mb-4">
+<div class="flex flex-col">
+<label class=" font-Nunito text-sm text-slate-900 mb-2">Departamento</label>
+<select v-model="selected_departamento" class=" p-2 border border-gray-200 rounded-xl placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10  ">
+<option value="" selected disabled>Selecciona el departamento</option>
+<option v-for="item in departamento"  :key="item.value" :value="item.text" >{{ item.text }}</option>    
+</select>
+</div>    
+<div class=" flex flex-col">
+<label class=" text-sm font-Nunito text-slate-900 mb-2">Municipio</label>     
+<input v-model="municipio" type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder=" Ingresa nombre completo">
 </div>
-<div class=" flex flex-row mt-4 space-x-1">
-<button class="bg-yellow-500 p-2 w-sm text-white font-Nunito text-md rounded-lg">Automatico</button>
-<button class="bg-yellow-500 p-2 w-sm text-white font-Nunito text-md rounded-lg">Manual</button>
+<div class=" flex flex-col">
+<label class=" text-sm font-Nunito text-slate-900 mb-2">Zona</label>     
+<input v-model="zona" type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder=" Ingresa nombre completo">
+</div>
+</div>
+<div class="grid grid-cols-3 gap-x-2">
+<div class=" flex flex-col">
+<label class=" text-sm font-Nunito text-slate-900 mb-2">Tipo de via</label>     
+<select v-model="via" class=" p-2 border border-gray-200 rounded-xl placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10  ">
+    <option value="" selected disabled>Selecciona tipo de via</option>
+    <option v-for="item in tipo_via"  :key="item.value" :value="item.text" >{{ item.text }}</option>    
+</select>
+</div>
+<div class="flex flex-col">
+<label class=" text-sm font-Nunito text-slate-900 mb-2">Nombre de la via</label>     
+<input v-model="nombre_via" type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder=" Ingresa nombre de la via">
+</div>
+<div class="flex flex-col">
+<label class=" text-sm font-Nunito text-slate-900 mb-2">Numero domicilio/ puerta</label>     
+<input v-model="nro_puerta" type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder="numero de puerta">
+</div>
+</div>
+<div class=" flex flex-col mt-4">
+    <label class="text-sm font-Nunito text-slate-900 mb-2">Referencias</label>     
+    <input v-model="referencias" type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder="referencias de la direccion">
+</div>
+<p class=" font-Nunito text-lg text-slate-900 mt-4 mb-4">Registro Usuario en el sistema</p>
+<div class="grid grid-cols-2 gap-x-2 mt-4">
+    <div class="flex flex-col">
+        <label class="text-sm font-Nunito text-slate-900 mb-2">Correo Electronico</label>     
+        <input v-model="correo_electronico" type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder="ingrese correo electronico empresarial">
+    </div>
+    <div class="flex flex-col">
+        <label class="text-sm font-Nunito text-slate-900 mb-2">Contraseña</label>     
+        <input v-model="pass" type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder="ingrese una contraseña segura mayor a 8 caracteres">
+    </div>
+    
+</div>
+<p class=" font-Nunito text-lg text-slate-900 mt-4 mb-4">Procesos de Contabilidad</p>
+<div class=" grid grid-cols-2 mt-4 gap-x-1 ">
+<button class="bg-yellow-500 p-2 w-2sm text-white font-Nunito text-md rounded-lg">Automatico</button>
+<button class="bg-yellow-500 p-2 w-2sm text-white font-Nunito text-md rounded-lg">Manual</button>
 </div>
 <p class=" text-slate-900 text-sm font-Nunito">Selecciona si los procesos de contabilidad seran automaticos o manuales</p>
 
 </form>
-<button type="button" class="w-3xl bg-green-500 p-2 rounded-lg text-white mt-5 mb-5 font-Nunito">Reistrar Nuevo</button>
+<button @click="registroNuevo" type="button" class=" bg-green-500 py-2 px-8 rounded-lg text-white mt-5 mb-5 font-Nunito cursor-pointer">Reistrar Nuevo</button>
 </div>    
 <div class=" flex flex-col mt-20 ml-30">
     <img src="@/assets/fondoRegistro.svg" alt="registro" width="500px" height="500px"> 

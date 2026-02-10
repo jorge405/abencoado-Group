@@ -1,12 +1,14 @@
 <script>
 import Swal from 'sweetalert2';
 import axios from 'axios';
+import Cookies from 'js-cookie';
 export default{
     name:'login',
     data(){
         return{
             correo:'',
-            pass:''
+            pass:'',
+            nit:''
         }
     },
     methods:{
@@ -17,7 +19,8 @@ export default{
             try {
                const responselogin = await axios.post('http://localhost:3000/abencoado/authUser',{
                 correo:this.correo,
-                pass:this.pass
+                pass:this.pass,
+                nit:this.nit
                }) 
               
                if (responselogin.data.estado==='error') {
@@ -28,12 +31,14 @@ export default{
                 })
                 this.correo='';
                 this.pass='';
+                // this.nit='';
                }else if(responselogin.data.estado==='ok'){
                 Swal.fire({
                     icon:'success',
                     title:'Abencoado Group',
                     text:'Bienvenido al sistema'
                 })
+                Cookies.set('token',responselogin.data.token,{expires:1})
                 this.$router.push('/perfilEmpresa')
                }
             } catch (error) {
@@ -41,6 +46,7 @@ export default{
             }
             
         }
+        
     }
 }    
 </script>
@@ -53,11 +59,11 @@ export default{
 <hr class=" w-lg  mx-auto border border-yellow-200 mb-4">
 <form class="ml-5">
     <label class=" block font-Nunito text-sm text-slate-700">Nit</label>
-    <input type="text" class=" p-2 rounded-xl border border-gray-200 w-lg placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="Nit ejemplo:68483849">
+    <input v-model="nit" type="text" class=" p-2 rounded-xl border border-gray-200 w-lg placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="Nit ejemplo:68483849">
     <label class=" block font-Nunito text-sm text-slate-700">Usuario</label>
     <input v-model="correo" type="text" class=" p-2 rounded-xl border border-gray-200 w-lg placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder=" correo electronico @">
     <label class=" block font-Nunito text-sm text-slate-700">Contraseña</label>
-    <input v-model="pass" type="text" class=" p-2 rounded-xl border border-gray-200 w-lg placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder=" ingrese tu contraseña">    
+    <input v-model="pass" type="password" class=" p-2 rounded-xl border border-gray-200 w-lg placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder=" ingrese tu contraseña">    
 </form>
 <button @click="enviarLogin" class=" bg-blue-600 rounded-lg p-2 w-lg text-white mt-5 ml-5 cursor-pointer">Iniciar</button>
 <div class=" flex flex-row mt-4 items-center justify-between ml-5 mr-10 mb-10">
@@ -73,7 +79,5 @@ export default{
 </div>    
 </footer>
 </div>    
-
-
 
 </template>
