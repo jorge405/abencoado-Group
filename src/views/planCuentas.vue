@@ -145,53 +145,42 @@ methods: {
             //----///
             console.log(responsenombreCuenta.data.rows)      
            const organizarPorNivel = (items) => {
-            // Crear mapa de items por ID
-            const mapa = {};
-            items.forEach(item => {
-                mapa[item.cod_nombreCuenta] = {
-                    ...item,
-                    children: [],
-                    open: false
-                };
-            });
-            
-            const raiz = [];
-            
-            // Separar items por nivel
-            const porNivel = {};
-            items.forEach(item => {
-                if (!porNivel[item.cod_nivelCuenta]) {
-                    porNivel[item.cod_nivelCuenta] = [];
-                }
-                porNivel[item.cod_nivelCuenta].push(item);
-            });
-            
-            // Agregar nivel 1 a la raíz
-            if (porNivel[1]) {
-                porNivel[1].forEach(item => {
-                    raiz.push(mapa[item.cod_nombreCuenta]);
-                });
-            }
-            
-            // Procesar del nivel 2 en adelante
-            for (let nivel = 2; nivel <= Object.keys(porNivel).length; nivel++) {
-                if (porNivel[nivel]) {
-                    porNivel[nivel].forEach(hijo => {
-                        // Buscar padre del nivel anterior con MISMO cod_tpcuenta
-                        const nivelPadre = nivel - 1;
-                        const itemPadre = porNivel[nivelPadre]?.find(padre => 
-                            padre.cod_tpcuenta === hijo.cod_tpcuenta
-                        );
-                        
-                        if (itemPadre && mapa[itemPadre.cod_nombreCuenta]) {
-                            mapa[itemPadre.cod_nombreCuenta].children.push(mapa[hijo.cod_nombreCuenta]);
-                        }
-                    });
-                }
-            }
-            
-            return raiz;
-        };
+  const mapa = {};
+  items.forEach(item => {
+    mapa[item.cod_nombreCuenta] = {
+      ...item,
+      children: [],
+      open: false
+    };
+  });
+
+  const raiz = [];
+
+  // Ordenar por nivel y por puct
+  const ordenados = [...items].sort((a, b) => a.puct - b.puct);
+
+  ordenados.forEach(item => {
+    if (item.cod_nivelCuenta === 1) {
+      raiz.push(mapa[item.cod_nombreCuenta]);
+    } else {
+      // buscar el padre correcto
+      const padre = ordenados
+        .filter(p =>
+          p.cod_nivelCuenta === item.cod_nivelCuenta - 1 &&
+          String(item.puct).startsWith(String(p.puct))
+        )
+        .sort((a, b) => b.puct - a.puct)[0]; // el más cercano
+
+      if (padre) {
+        mapa[padre.cod_nombreCuenta].children.push(
+          mapa[item.cod_nombreCuenta]
+        );
+      }
+    }
+  });
+
+  return raiz;
+};
         this.dataCuenta=organizarPorNivel(responsenombreCuenta.data.rows)  
         
         console.log(this.dataCuenta);   
@@ -230,6 +219,15 @@ watch:{
         }else if(newval===1){
             const filterlengthcuenta= this.dataCuenta.length+1;
             this.puct=`${filterlengthcuenta}`
+        }else if(newval===3){
+            console.log(this.dataCuenta)
+            const filterPuct = this.dataCuenta.filter(item=> item.cod_tpcuenta===this.itemSeleccionado.cod_tpcuenta)[0].children.filter(item=> item.nombre_cuenta===this.itemSeleccionado.nombre_cuenta)[0].children.length===0 ? [] : this.dataCuenta.filter(item=>item.cod_tpcuenta===this.itemSeleccionado.cod_tpcuenta)[0].children.filter(item=> item.nombre_cuenta===this.itemSeleccionado.nombre_cuenta) ;
+            console.log(filterPuct)
+            if (filterPuct.length===0) {
+                this.puct=`${this.itemSeleccionado.puct}${filterPuct.length+1}`    
+            } else{
+                this.puct=`${this.itemSeleccionado.puct}${filterPuct.length+1}`
+            }
         }
     }
 }

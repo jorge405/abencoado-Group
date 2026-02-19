@@ -1,5 +1,5 @@
 <template>
-  <ul class="pl-4 border-l border-gray-300 space-y-1">
+  <ul class="pl-4 border-l border-gray-300 space-y-1 max-h-96 overflow-y-auto">
     <li v-for="item in items" :key="item.cod_nombreCuenta">
 
       <!-- Título -->
@@ -8,7 +8,7 @@
                hover:text-blue-600 transition-colors"
         @click="toggle(item)"
       >
-        <span @click="$emit('select',item)">{{ item.puct }}{{ item.nombre_cuenta }}</span>
+        <span @click.stop="$emit('select',item)">{{ item.puct }}{{ item.nombre_cuenta }}</span>
 
         <span
           v-if="item.children?.length"
@@ -29,7 +29,7 @@
           v-show="item.open && item.children?.length"
           class="overflow-hidden"
         >
-          <NestedList :items="item.children" />
+          <NestedList :items="item.children" @select="$emit('select',$event)" />
         </div>
       </transition>
 
