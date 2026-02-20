@@ -77,13 +77,17 @@ export default{
                     return this.tip_empresa=[];
                 }else if(responseTipoEmpresa.data.estado==='ok'){
                     this.tip_empresa=responseTipoEmpresa.data.rows;
+                    console.log(this.tip_empresa)
                 }
             } catch (error) {
                 console.log('problemas al obtener tipo de empresa:', error)
             }
         },
         async registroNuevo(){
+            const filterTipEmpresa= this.tip_empresa.filter(item => item.tipo_empresa===this.selected_empresa);
+            
             try {
+
                 const datos={
                     razon_social:this.razon_social,
                     nombre_propietario:this.nombre_propietario,
@@ -101,7 +105,7 @@ export default{
                     nro_puerta:this.nro_puerta,
                     referencias:this.referencias,
                     actividad_principal:this.actividad_principal,
-                    cod_tpEmpresa:this.selected_empresa
+                    cod_tpEmpresa:filterTipEmpresa[0].cod_tpEmpresa
                 } 
                 const responseRegistroNuevo= await axios.post('http://localhost:3000/abencoado/addEmpresa',datos) 
                 if (responseRegistroNuevo.data.estado==='error'){
@@ -194,7 +198,9 @@ export default{
     },
     watch:{
         selected_empresa(newval){
-            if (newval===4) {
+            
+            
+            if (newval==='UNIPERSONAL') { 
                 this.activeRazonSocial=true;
                 this.activeNombrePropietario=false;
             }else{
@@ -221,7 +227,7 @@ export default{
 <label class=" font-Nunito text-sm text-slate-900 mb-2">Tipo de Empresa</label>
 <select v-model="selected_empresa" class=" p-2 border border-gray-200 rounded-xl placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10  ">
 <option value="" selected disabled class=" font-Nunito text-sm placeholder:text-sm ">Selecciona tipo empresa</option>
-<option v-for="item in tip_empresa"  :key="item.cod_tpEmpresa" :value="item.cod_tpEmpresa" >{{ item.tipo_empresa }}</option>    
+<option v-for="item in tip_empresa"  :key="item.cod_tpEmpresa" :value="item.tipo_empresa" >{{ item.tipo_empresa }}</option>    
 </select>
 </div>
 <div class="flex flex-col">

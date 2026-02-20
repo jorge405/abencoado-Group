@@ -161,8 +161,8 @@ export default{
         </div>
         </div>
     <div class=" flex flex-row space-x-4">
-        <button class=" w-xs bg-blue-950 rounded-lg p-2 font-Nunito text-white text-md">Nuevo</button>
-        <button @click="mostrarConsultaLibro=true" class=" w-xs bg-blue-950 rounded-lg p-2 font-Nunito text-white text-md">Consultar</button>
+        <button class=" w-xs bg-blue-950 rounded-lg p-2 font-Nunito text-white text-md cursor-pointer">Nuevo</button>
+        <button @click="mostrarConsultaLibro=true" class=" w-xs bg-blue-950 rounded-lg p-2 font-Nunito cursor-pointer text-white text-md">Consultar</button>
     </div>
     </div>
     <transition enter-active-class="transition duration-300 ease-out"
@@ -235,8 +235,8 @@ export default{
                     </select>
                 </div>    
                 <div class=" flex flex-row space-x-4 justify-center">
-                    <button @click="mostrarConsultaLibro=false" class=" bg-blue-950 w-xs rounded-lg p-2">Aceptar</button>
-                    <button @click="mostrarConsultaLibro=false" class=" bg-red-800 w-xs rounded-lg p-2">Cancelar</button>
+                    <button @click="mostrarConsultaLibro=false" class=" bg-blue-950 w-xs rounded-lg p-2 cursor-pointer">Aceptar</button>
+                    <button @click="mostrarConsultaLibro=false" class=" bg-red-800 w-xs rounded-lg p-2 cursor-pointer">Cancelar</button>
                 </div>
             </div>
         </div>

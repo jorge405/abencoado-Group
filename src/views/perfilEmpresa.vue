@@ -47,12 +47,15 @@ export default {
             }],
             tipo_empresa:'',
             fecha_inscripcion:'',
-            mostrarEmpresa:true
+            mostrarEmpresa:true,
+            actividad_secundaria:[],
+            cod_empresa:''
 
         }
     },
     mounted(){
         this.InfoEmpresa();
+        
     },
     methods:{ 
         async InfoEmpresa(){
@@ -63,7 +66,6 @@ export default {
                     token
                 }) 
                 if (responseInfoEmpresa.data.estado==='ok') {
-                    
                     console.log(responseInfoEmpresa.data.data)
                     this.infoEmpresa[0].cod_empresa=responseInfoEmpresa.data.data[0].cod_empresa;
                     this.infoEmpresa[0].razon_social=responseInfoEmpresa.data.data[0].razon_social;
@@ -84,17 +86,29 @@ export default {
                     this.infoEmpresa[0].actividad_principal=responseInfoEmpresa.data.data[0].actividad_principal;
 
                     const fecha=responseInfoEmpresa.data.data[0].fecha_inscripcion;
-                    console.log(fecha.split('-'))
+                    
                 } 
+             
+                const responseActividadSecundaria= await axios.get(`http://localhost:3000/abencoado/infoActividadSecundaria/${parseInt(this.infoEmpresa[0].cod_empresa)}`)
+
+                if (responseActividadSecundaria.data.estado==='vacio') {
+                    return this.actividad_secundaria=[];
+                }
+                if(responseActividadSecundaria.data.estado==='ok'){
+                    
+                    this.actividad_secundaria=responseActividadSecundaria.data.rows[0].actividad_secundaria;
+                    console.log(this.actividad_secundaria)
+                }
             } catch (error) {
                 console.error('error en el servidor:', error);
                 Swal.fire({
                     icon:'error',
                     title:'Abencoado Group',
                     text:'Error al cargar la informacion de la empresa'
-                })
+                }) 
             }
-        }
+        },
+        
     },
     watch:{
         tipo_empresa(newval){
@@ -207,6 +221,16 @@ export default {
                     <p class=" text-slate-950 font-Nunito text-md mt-2">{{ infoEmpresa[0].actividad_principal }}</p>
                 </div>
             </div>
+            <div class="grid grid-cols-1 mx-2">
+                <div class=" flex flex-col">
+                    <p class=" text-slate-900 font-Nunito text-sm mt-5">Actividad Secundaria </p>
+                    <ul class="flex flex-row flex-wrap gap-2">
+                        <li v-for="(actividad,index) in actividad_secundaria" :key="index" class="bg-blue-100 px-3 py-1 rounded-lg text-slate-900 font-Nunito text-md">
+                            {{ actividad }}
+                        </li>
+                    </ul>
+                </div>
+            </div>
             
             
         </div>
@@ -220,8 +244,8 @@ export default {
                     <input v-model="selectedGestion"  type="text" class=" w-xs  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder=" Ingresa gestion ejemplo:2023">
             </div>
         <div class=" flex flex-row space-x-5">
-            <button  class=" bg-green-700 rounded-lg p-2 w-xs text-white mt-5 cursor-pointer">Crear Nueva gestion</button>
-            <button  class=" bg-green-700 rounded-lg p-2 w-xs text-white mt-5 cursor-pointer">Crear Reapertura</button>
+            <button  class=" bg-blue-950 rounded-lg p-2 w-xs text-white mt-5 cursor-pointer">Crear Nueva gestion</button>
+            <button  class=" bg-blue-950 rounded-lg p-2 w-xs text-white mt-5 cursor-pointer">Crear Reapertura</button>
         </div>
         </div>
         
