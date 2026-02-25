@@ -101,7 +101,7 @@ export default {
                 }
             } catch (error) {
                 console.error('error en el servidor:', error);
-                Swal.fire({
+                Swal.fire({ 
                     icon:'error',
                     title:'Abencoado Group',
                     text:'Error al cargar la informacion de la empresa'
@@ -225,7 +225,7 @@ export default {
                 <div class=" flex flex-col">
                     <p class=" text-slate-900 font-Nunito text-sm mt-5">Actividad Secundaria </p>
                     <ul class="flex flex-row flex-wrap gap-2">
-                        <li v-for="(actividad,index) in actividad_secundaria" :key="index" class="bg-blue-100 px-3 py-1 rounded-lg text-slate-900 font-Nunito text-md">
+                        <li v-for="(actividad,index) in actividad_secundaria" :key="index" class="bg-blue-400 px-3 py-1 rounded-lg text-slate-900 font-Nunito text-md">
                             {{ actividad }}
                         </li>
                     </ul>

@@ -53,9 +53,11 @@ export default{
 
 <template>
 <div class="fixed min-h-screen min-w-screen  bg-[url(@/assets/fondoAbencoado.jpg)] bg-no-repeat bg-cover">
-
-<div class="  flex flex-col w-xl bg-gray-50 mx-auto mt-40 rounded-xl space-y-3">
-<p class=" font-Nunito text-2xl mx-auto mt-5 mb-5 ">Sistema Contable</p>
+<div class="flex flex-col ml-15 w-xs">
+    <img src="../assets/logoAbencoado-removebg-preview.png"  alt="nose pudo cargar la imagen" width="200" height="200"  class="bg-cover bg-center ">
+</div>
+<div class="  flex flex-col w-xl bg-gray-50 mx-auto  rounded-xl space-y-3">
+<p class=" font-Nunito text-xl mx-auto mt-5 mb-5 ">Sistema Contable</p>
 <hr class=" w-lg  mx-auto border border-yellow-200 mb-4">
 <form class="ml-5">
     <label class=" block font-Nunito text-sm text-slate-700">Nit</label>
@@ -73,10 +75,7 @@ export default{
 </div>
 
 <footer>
-<div class=" ml-15">
-<p class=" text-6xl font-Nunito">Abencoado</p>
-<p class="text-3xl font-Nunito">Group</p>
-</div>    
+    
 </footer>
 </div>    
 

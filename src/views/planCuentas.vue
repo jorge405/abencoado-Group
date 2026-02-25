@@ -204,7 +204,7 @@ watch:{
     selectedCuenta(newval){
         console.log(newval) 
     },
-    selectedNivel(newval){
+    selectedNivel(newval){   
         if (newval===2) {
             console.log(this.dataCuenta)
             console.log(this.itemSeleccionado)
@@ -221,16 +221,26 @@ watch:{
             this.puct=`${filterlengthcuenta}`
         }else if(newval===3){
             console.log(this.dataCuenta)
-            const filterPuct = this.dataCuenta.filter(item=> item.cod_tpcuenta===this.itemSeleccionado.cod_tpcuenta)[0].children.filter(item=> item.nombre_cuenta===this.itemSeleccionado.nombre_cuenta)[0].children.length===0 ? [] : this.dataCuenta.filter(item=>item.cod_tpcuenta===this.itemSeleccionado.cod_tpcuenta)[0].children.filter(item=> item.nombre_cuenta===this.itemSeleccionado.nombre_cuenta) ;
-            console.log(filterPuct)
+            const filterPuct = this.itemSeleccionado.children.length===0 ? []: this.itemSeleccionado;
+            
             if (filterPuct.length===0) {
                 this.puct=`${this.itemSeleccionado.puct}${filterPuct.length+1}`    
             } else{
-                this.puct=`${this.itemSeleccionado.puct}${filterPuct.length+1}`
-            }
+                console.log(filterPuct)
+                this.puct=`${this.itemSeleccionado.puct}${filterPuct.children.length+1}` 
+            } 
+        }else if(newval===4){
+            console.log(this.itemSeleccionado)
+            const filterPuct = this.itemSeleccionado.children.length=== 0 ? [] : this.itemSeleccionado.children;
+            console.log(filterPuct);
+            if (filterPuct.length===0) {
+                this.puct=`${this.itemSeleccionado.puct}00${this.itemSeleccionado.children.length+1}`
+            }else{
+                this.puct=`${this.itemSeleccionado.puct}${this.itemSeleccionado.children.length > 9 ? '0' + (this.itemSeleccionado.children.length + 1) : '00' + (this.itemSeleccionado.children.length + 1)}`
+            }           
         }
     }
-}
+} 
 }
 
 </script>

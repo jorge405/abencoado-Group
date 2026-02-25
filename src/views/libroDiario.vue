@@ -1,3 +1,4 @@
+
 <script>
 import sidebar from '@/assets/layout/sidebar.vue';
 import flatPickr from 'vue-flatpickr-component'
@@ -5,9 +6,17 @@ import 'flatpickr/dist/flatpickr.css'
 import { AgGridVue } from 'ag-grid-vue3';
 import "ag-grid-community/styles/ag-grid.css"
 import "ag-grid-community/styles/ag-theme-alpine.css"
+import axios from 'axios'; 
+
+
+
 export default{
     data(){
         return{
+            gridOptions: {
+                 enterNavigatesVertically: true,
+                enterNavigatesVerticallyAfterEdit: true
+            },
             comprobante:[
                 {value:1,text:'Ingreso'},
                 {value:2,text:'Egreso'},
@@ -19,7 +28,8 @@ export default{
             flatpickrTimeConfig:{
             enableTime: true,
             noCalendar: true,
-            dateFormat: 'H:i',
+            dateFormat: 'Y-m-d',
+            locale:'es',
             time_24hr: true,
             minuteIncrement: 1,
             wrap: false,
@@ -33,7 +43,11 @@ export default{
             ],
             defaultColDef: {
             flex: 1,
-            resizable: true
+            resizable: true,
+            onCellKeyDown: this.onCellKeyDown
+            },
+            gridOptions: {
+                stopEditingWhenCellsLoseFocus: true
             },
             rowData: [
             {
@@ -42,22 +56,176 @@ export default{
                 referencia: "",
                 debe: 0,
                 haber: 0
+            },
+            {
+                cuenta: "",
+                nombre_cuenta: "",
+                referencia: "",
+                debe: 0,
+                haber: 0
+            },
+            {
+                cuenta: "",
+                nombre_cuenta: "",
+                referencia: "",
+                debe: 0,
+                haber: 0
+            },
+            {
+                cuenta: "",
+                nombre_cuenta: "",
+                referencia: "",
+                debe: 0,
+                haber: 0
+            },
+            {
+                cuenta: "",
+                nombre_cuenta: "",
+                referencia: "",
+                debe: 0,
+                haber: 0
             }
+            
             ],
-            mostrarConsultaLibro:false
+            mostrarConsultaLibro:false,
+            empresas:[],
+            selectedEmpresa:'',
+            nro_comprobante:'',
+            fecha_comprobante:'',
+            dolar:'',
+            ufv:''
+
         }
+    },
+    mounted(){
+        this.getEmpresas();
     },
     methods:{
         numberParser(params) {
             return Number(params.newValue) || 0
         },
+        // Validar que una fila esté completa
+        esFilaCompleta(fila) {
+            return fila.cuenta.trim() !== "" && 
+                   fila.nombre_cuenta.trim() !== "" &&
+                   fila.referencia.trim() !== "" &&
+                   (fila.debe > 0 || fila.haber > 0);
+        },
+        obtenerFilasCompletas(){
+            return this.rowData.filter(fila=> this.esFilaCompleta(fila));
+        },
         onCellValueChanged(event) {
             console.log("Fila actualizada:", event.data)
+            // Agregar nueva fila vacía si estamos en la última
+            if (event.rowIndex === this.rowData.length - 1) {
+                this.rowData.push({
+                    cuenta:"",
+                    nombre_cuenta:"", 
+                    referencia:"", 
+                    debe: 0,
+                    haber: 0
+                })
+            } 
+            console.log("Filas completas: ",this.obtenerFilasCompletas())
+        },
+        onCellKeyDown(params){
+            // Verificar si se presionó Enter en la celda "haber"
+    if (params.event.key === 'Enter' && params.colDef.field === 'haber') {
+        params.event.preventDefault();
+        params.event.stopPropagation();
+        
+        const filaActual = params.data;
+        const rowIndex = params.rowIndex;
+
+        // Validar que la fila esté completa
+        if (!this.esFilaCompleta(filaActual)) {
+            alert('Por favor completa todos los campos de la fila (Cuenta, Nombre de cuenta, Referencia y al menos Debe o Haber)');
+            return;
         }
+
+
+        // ⭐ ESTO ES LO QUE FALTABA
+        //params.api.stopEditing();
+
+
+        let siguienteFila = rowIndex + 1;
+
+        // Si es la última fila → crear nueva fila
+        if (rowIndex === this.rowData.length - 1) {
+            this.rowData.push({
+                cuenta: "",
+                nombre_cuenta: "", 
+                referencia: "",
+                debe: 0,
+                haber: 0
+            });
+        }
+
+        // MOVER FOCO SIEMPRE A LA SIGUIENTE FILA → CUENTA
+        setTimeout(() => {
+            if (this.$refs.agGrid) {
+                this.$refs.agGrid.api.setFocusedCell(siguienteFila, 'cuenta');
+                this.$refs.agGrid.api.startEditingCell({
+                    rowIndex: siguienteFila,
+                    colKey: 'cuenta'
+                });
+            }
+        }, 50);
+
+        console.log("Fila guardada:", filaActual);
+        }
+    },
+    async getEmpresas(){
+            try {
+                const responseEmpresas= await axios.get('http://localhost:3000/abencoado/getEmpresas');
+                if (responseEmpresas.data.estado==='vacio') {
+                    return this.empresas=[]
+                }
+                this.empresas=responseEmpresas.data.rows;
+                console.log(this.empresas);
+            } catch (error) {
+                console.log('ocurrio un error en el servidor',error);
+            }
+    },
+    async getCotizacionOne(fecha){
+        try {
+            const responsefecha= await axios.post('http://localhost:3000/abencoado/getCotizacionOne',{fecha_comprobante:fecha})
+            this.dolar=responsefecha.data.estado==='vacio' ? '': responsefecha.data.rows[0].dolar;
+            this.ufv=responsefecha.data.estado==='vacio' ? '': responsefecha.data.rows[0].ufv;
+        } catch (error) {
+            console.log(error)
+        }
+    }
     },
     watch:{
         rowData(newval){
             console.log(newval[0])
+        },
+        tipo_comprobante(newval){
+            console.log(this.tipo_comprobante)
+            if (this.fecha_comprobante==='') {
+                return;
+            }else{
+                const fecha= new Date(this.fecha_comprobante);
+                const mesFormato= (fecha.getMonth()+1).toString().padStart(2,'0');
+                this.nro_comprobante=`${this.tipo_comprobante}${mesFormato}`
+            }
+
+        },
+        
+         fecha_comprobante(newval){
+             if(!newval) return
+        this.getCotizacionOne(newval);
+        // Parsear manualmente para evitar problemas de zona horaria 
+        const [ano, mes, dia] = newval.split('-');
+        const fecha = new Date(ano, mes - 1, dia);
+        
+        const diaFormato = fecha.getDate().toString().padStart(2,'0');
+        const mesFormato = (fecha.getMonth() + 1).toString().padStart(2,'0');
+        const anoFormato = fecha.getFullYear();
+        this.nro_comprobante= `${this.tipo_comprobante}${mesFormato}`
+        
+        
         }
     },
     components:{
@@ -79,13 +247,13 @@ export default{
             <div class=" grid grid-cols-2 mt-5 gap-x-4">
             <div class=" flex flex-col">
                 <label class=" block font-Nunito text-sm text-slate-700">Comprobante Nro</label>
-                <input v-model="nit" type="text" class=" bg-white p-2 rounded-xl border border-gray-200  placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="Nit ejemplo:68483849">
+                <input v-model="nro_comprobante"  type="text" class=" bg-white p-2 rounded-xl border border-gray-200  placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="Nit ejemplo:68483849">
             </div>
             <div class=" flex flex-col">
                 <label class=" block font-Nunito text-sm text-slate-700">Tipo de comprobante</label>
                 <select v-model="tipo_comprobante" class=" bg-white p-2 border border-gray-200 rounded-xl placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10  ">
                     <option value="" selected disabled>Selecciona tipo comprobante</option>
-                    <option v-for="item in comprobante"  :key="item.value" :value="item.text" >{{ item.text }}</option>    
+                    <option v-for="item in comprobante"  :key="item.value" :value="item.value" >{{ item.text }}</option>    
                 </select>
             </div>
         </div>
@@ -94,7 +262,7 @@ export default{
                 <label class="text-sm font-Nunito text-slate-800 ">Fecha</label>
                 <div class="flex flex-row relative">
                             <flat-pickr
-                            v-model="fecha_inscripcion"
+                            v-model="fecha_comprobante"
                             :config="flatpickrConfig"
                             class=" w-sm  appearance-none rounded-xl border border-gray-300  bg-white p-2.5   text-sm text-slate-800 shadow-theme-xs placeholder:text-gray-700 focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10"
                             placeholder="ingrese fecha"/>
@@ -117,22 +285,25 @@ export default{
             </div>
             <div class=" flex flex-col">
                 <label class=" block font-Nunito text-sm text-slate-700">T.C $us</label>
-                <input v-model="nit" type="text" class=" bg-white p-2 rounded-xl border border-gray-200  placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="Nit ejemplo:68483849">            
+                <input v-model="dolar" type="text" class=" bg-white p-2 rounded-xl border border-gray-200  placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="Nit ejemplo:68483849">            
             </div>
             <div class=" flex flex-col">
                 <label class=" block font-Nunito text-sm text-slate-700">T.C Ufv</label>
-                <input v-model="nit" type="text" class=" bg-white p-2 rounded-xl border border-gray-200  placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="Nit ejemplo:68483849">            
+                <input v-model="ufv" type="text" class=" bg-white p-2 rounded-xl border border-gray-200  placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="Nit ejemplo:68483849">            
             </div>
         </div>
         </div>
         <div class="grid grid-cols-3 space-x-4">
             <div class=" flex flex-col">
                 <label class=" block font-Nunito text-sm text-slate-700">Razon social/propietario</label>
-                <input v-model="nit" type="text" class=" bg-white p-2 rounded-xl border border-gray-200  placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="Nit ejemplo:68483849">            
+                <select v-model="selectedEmpresa" class=" bg-white p-2 border border-gray-200 rounded-xl placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10  ">
+                    <option value="" selected disabled class=" font-Nunito text-sm placeholder:text-sm ">Selecciona empresa</option>
+                    <option  v-for="item in empresas" :key="item.cod_empresa" :value="item.razon_social">{{ item.razon_social || item.nombre_propietario }}</option>
+                </select>    
             </div>
             <div class=" flex flex-col">
                 <label class=" block font-Nunito text-sm text-slate-700">Glosa</label>
-                <input v-model="nit" type="text" class=" bg-white p-2 rounded-xl border border-gray-200  placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="Nit ejemplo:68483849">            
+                <input v-model="nit" type="text" class=" bg-white p-2 rounded-xl border border-gray-200  placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="ingrese glosa">            
             </div>
             <div class=" flex flex-col">
                 <label class=" block font-Nunito text-sm text-slate-700">Metodo de Pago</label>
@@ -144,7 +315,8 @@ export default{
         </div>
         <!-- tabla debe haber-->
         <div class="w-6xl h-96 mx-auto mb-2 mt-10 bg-gray-300 overflow-y-auto border-2 border-slate-900 ag-theme-alpine">
-            <AgGridVue class="w-full h-full font-Nunito"
+            <AgGridVue ref="agGrid"
+                class="w-full h-full font-Nunito"
                 :columnDefs="columnDefs"
                 :rowData="rowData"
                 :defaultColDef="defaultColDef"
@@ -173,7 +345,7 @@ export default{
                 leave-to-class="opacity-0 scale-95">
     <div v-if="mostrarConsultaLibro" class="fixed inset-0 flex items-center justify-around z-50">
         <div class="bg-gray-50 bg-opacity-80 text-white  ml-56 w-xl p-6 rounded-lg shadow-2xl flex flex-col space-x-2">
-            <p class=" text-slate-900 font-Nunito text-md font-bold mb-5 mx-auto">CONSULTA LIBRO</p>
+            <p class=" text-slate-900 font-Nunito text-md font-bold mb-5 mx-auto">CONSULTAR LIBRO</p>
             <div class="flex flex-col">
                 <div class=" flex flex-row space-x-4">
                     <div class=" flex flex-row items-center">
