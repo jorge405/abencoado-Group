@@ -3,12 +3,16 @@ import flatPickr from 'vue-flatpickr-component'
 import 'flatpickr/dist/flatpickr.css'
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import fondoRegistro from '@/assets/fondoRegistro.svg';
+
 
 export default{
 
     name:'RegistroNuevo',
     data(){
         return{
+        image1:'/fondoRegistro.svg',
+        image2:fondoRegistro,
         tip_empresa:[],
         departamento:[
             {value:'La Paz',text:'La Paz'},
@@ -107,7 +111,7 @@ export default{
                     actividad_principal:this.actividad_principal,
                     cod_tpEmpresa:filterTipEmpresa[0].cod_tpEmpresa
                 } 
-                const responseRegistroNuevo= await axios.post('http://localhost:3000/abencoado/addEmpresa',datos) 
+                const responseRegistroNuevo= await axios.post('/addEmpresa',datos) 
                 if (responseRegistroNuevo.data.estado==='error'){
                     Swal.fire({
                         icon:'error',
@@ -117,7 +121,7 @@ export default{
                     return;
                 }
                 console.log(responseRegistroNuevo.data);
-                    const responseUsuario= await axios.post('http://localhost:3000/abencoado/addUser',{
+                    const responseUsuario= await axios.post('/addUser',{
                         correo_electronico:this.correo_electronico,
                         pass:this.pass,
                         cod_tipUser:2,
@@ -132,7 +136,7 @@ export default{
                         return;
                     }
                     
-                    const responseActividadSecundaria= await axios.post('http://localhost:3000/abencoado/addActividadSecundaria',{
+                    const responseActividadSecundaria= await axios.post('/addActividadSecundaria',{
                         actividad_secundaria:this.actividad_secundaria
                     })
 
@@ -145,7 +149,7 @@ export default{
                         return;
                     }
 
-                    const responseActividad= await axios.post('http://localhost:3000/abencoado/addActividades',{
+                    const responseActividad= await axios.post('/addActividades',{
                         cod_empresa:responseRegistroNuevo.data.cod_empresa,
                         cod_actividadSecundaria:responseActividadSecundaria.data.cod_actividadSecundaria
                     })
@@ -368,7 +372,7 @@ export default{
 <button @click="registroNuevo" type="button" class=" bg-green-500 py-2 px-8 rounded-lg text-white mt-5 mb-5 font-Nunito cursor-pointer">Reistrar Nuevo</button>
 </div>    
 <div class=" flex flex-col mt-20 ml-30">
-    <img src="@/assets/fondoRegistro.svg" alt="registro" width="500px" height="500px"> 
+    <img :src="image1" @error="image1=image2" alt="no se pudo cargar la imagen" width="500px" height="500px"> 
 </div>
 </div>
 

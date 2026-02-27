@@ -1,6 +1,6 @@
 <template>
   <ul class="pl-4 border-l border-gray-300 space-y-1 max-h-96 overflow-y-auto">
-    <li v-for="item in items" :key="item.cod_nombreCuenta">
+    <li class="text-sm font-Nunito" v-for="item in items" :key="item.cod_nombreCuenta">
 
       <!-- Título -->
       <div
