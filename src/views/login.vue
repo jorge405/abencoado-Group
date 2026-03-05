@@ -47,7 +47,7 @@ export default{
                 })
                 this.correo='';
                 this.pass='';
-                // this.nit='';
+                this.nit='';
                }else if(responselogin.data.estado==='ok'){
                 Swal.fire({
                     icon:'success',
@@ -68,7 +68,7 @@ export default{
                 this.pass='';
                 this.nit='';
             }
-            
+             
         }
         
     }

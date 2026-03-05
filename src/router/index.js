@@ -5,6 +5,7 @@ import perfilEmpresa from '../views/perfilEmpresa.vue';
 import cotizaciones from '../views/cotizaciones.vue';
 import PlanCuentas from '@/views/planCuentas.vue';
 import LibroDiario from '@/views/libroDiario.vue';
+import libroMayor from '@/views/libroMayor.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -38,6 +39,11 @@ const router = createRouter({
       path:'/libroDiario',
       name:'libroDiario',
       component:LibroDiario
+    },
+    {
+      path:'/libroMayor',
+      name:'libroMayor',
+      component:libroMayor
     }
     
   ],
