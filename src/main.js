@@ -4,6 +4,7 @@ import './assets/main.css'
 import 'ag-grid-community/styles/ag-grid.css'
 import 'ag-grid-community/styles/ag-theme-alpine.css'
 import 'flatpickr/dist/flatpickr.css'
+import 'animate.css';
 import { Spanish } from 'flatpickr/dist/l10n/es.js'
 //import VueFilesPreview from 'vue-files-preview';
 import { ModuleRegistry } from 'ag-grid-community'

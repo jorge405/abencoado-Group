@@ -68,43 +68,43 @@ export default {
                 const responseInfoEmpresa= await api.post('/infoEmpresa',{
                     token
                 }) 
+                
                 if (responseInfoEmpresa.data.estado==='ok') {
+                    const datosencrpyt= responseInfoEmpresa.data.rows[0].razon_social==='' ? responseInfoEmpresa.data.rows[0].nombre_propietario : responseInfoEmpresa.data.rows[0].razon_social;
                     
-                    const encryptEmpresa=CryptoJS.AES.encrypt(String(responseInfoEmpresa.data.data[0].cod_empresa),this.key).toString();
+                    if (datosencrpyt==='') {
+                        return '';
+                    }else{
+                      const encryptDatosEmpresa= CryptoJS.AES.encrypt(String(datosencrpyt),this.key).toString();
+                      Cookies.set('dataEmp',encryptDatosEmpresa,{expires:1,secure:true});     
+                    }
+                    
+                    const encryptEmpresa=CryptoJS.AES.encrypt(String(responseInfoEmpresa.data.rows[0].cod_empresa),this.key).toString();
                     Cookies.set('emp',encryptEmpresa,{expires:1,secure:true});
+                    
+                    this.infoEmpresa[0].cod_empresa=responseInfoEmpresa.data.rows[0].cod_empresa;
+                    this.infoEmpresa[0].razon_social=responseInfoEmpresa.data.rows[0].razon_social;
+                    this.infoEmpresa[0].nombre_propietario=responseInfoEmpresa.data.rows[0].nombre_propietario;
+                    this.infoEmpresa[0].nit=responseInfoEmpresa.data.rows[0].nit;
+                    this.infoEmpresa[0].departamento=responseInfoEmpresa.data.rows[0].departamento;
+                    this.infoEmpresa[0].municipio=responseInfoEmpresa.data.rows[0].municipio;
+                    this.infoEmpresa[0].tipo_via=responseInfoEmpresa.data.rows[0].tipo_via;
+                    this.infoEmpresa[0].nombre_via=responseInfoEmpresa.data.rows[0].nombre_via;
+                    this.infoEmpresa[0].nro_puerta=responseInfoEmpresa.data.rows[0].nro_puerta;
+                    this.infoEmpresa[0].nro_testimonio=responseInfoEmpresa.data.rows[0].nro_testimonio;
+                    this.infoEmpresa[0].nro_poder=responseInfoEmpresa.data.rows[0].nro_poder;
+                    this.infoEmpresa[0].notaria=responseInfoEmpresa.data.rows[0].notaria;
+                    this.tipo_empresa=responseInfoEmpresa.data.rows[0].tipo_empresa;
+                    this.fecha_inscripcion=responseInfoEmpresa.data.rows[0].fecha_inscripcion;
+                    this.infoEmpresa[0].zona=responseInfoEmpresa.data.rows[0].zona;
+                    this.infoEmpresa[0].referencias=responseInfoEmpresa.data.rows[0].referencias;
+                    this.infoEmpresa[0].actividad_principal=responseInfoEmpresa.data.rows[0].actividad_principal;
+                    this.actividad_secundaria=responseInfoEmpresa.data.rows[0].actividad_secundaria;
 
-                    this.infoEmpresa[0].cod_empresa=responseInfoEmpresa.data.data[0].cod_empresa;
-                    this.infoEmpresa[0].razon_social=responseInfoEmpresa.data.data[0].razon_social;
-                    this.infoEmpresa[0].nombre_propietario=responseInfoEmpresa.data.data[0].nombre_propietario;
-                    this.infoEmpresa[0].nit=responseInfoEmpresa.data.data[0].nit;
-                    this.infoEmpresa[0].departamento=responseInfoEmpresa.data.data[0].departamento;
-                    this.infoEmpresa[0].municipio=responseInfoEmpresa.data.data[0].municipio;
-                    this.infoEmpresa[0].tipo_via=responseInfoEmpresa.data.data[0].tipo_via;
-                    this.infoEmpresa[0].nombre_via=responseInfoEmpresa.data.data[0].nombre_via;
-                    this.infoEmpresa[0].nro_puerta=responseInfoEmpresa.data.data[0].nro_puerta;
-                    this.infoEmpresa[0].nro_testimonio=responseInfoEmpresa.data.data[0].nro_testimonio;
-                    this.infoEmpresa[0].nro_poder=responseInfoEmpresa.data.data[0].nro_poder;
-                    this.infoEmpresa[0].notaria=responseInfoEmpresa.data.data[0].notaria;
-                    this.tipo_empresa=responseInfoEmpresa.data.data[0].tipo_empresa;
-                    this.fecha_inscripcion=responseInfoEmpresa.data.data[0].fecha_inscripcion;
-                    this.infoEmpresa[0].zona=responseInfoEmpresa.data.data[0].zona;
-                    this.infoEmpresa[0].referencias=responseInfoEmpresa.data.data[0].referencias;
-                    this.infoEmpresa[0].actividad_principal=responseInfoEmpresa.data.data[0].actividad_principal;
-
-                    const fecha=responseInfoEmpresa.data.data[0].fecha_inscripcion;
                     
                 } 
              
-                const responseActividadSecundaria= await api.get(`/infoActividadSecundaria/${parseInt(this.infoEmpresa[0].cod_empresa)}`)
-
-                if (responseActividadSecundaria.data.estado==='vacio') {
-                    return this.actividad_secundaria=[];
-                } 
-                if(responseActividadSecundaria.data.estado==='ok'){
-                    
-                    this.actividad_secundaria=responseActividadSecundaria.data.rows[0].actividad_secundaria;
-                    console.log(this.actividad_secundaria)
-                }
+                
             } catch (error) {
                 console.error('error en el servidor:', error);
                 Swal.fire({ 
@@ -154,84 +154,114 @@ export default {
 <template>
 <sidebar>
     <template #title>Perfil Empresa</template>
-    <div class="flex flex-row mx-auto space-x-5">
-        <div class=" mt-10 bg-gray-200 p-5 rounded-lg w-3xl h-3/5 ml-10">
+    <div class="flex flex-col ml-55 space-x-5">
+        <div class=" flex flex-row items-center space-x-10">
+            <div class=" flex flex-col cursor-pointer ">
+                <p class="text-2xl font-Nunito font-semibold text-slate-900 mt-10 ">{{ infoEmpresa[0].razon_social || infoEmpresa[0].nombre_propietario }}</p>
+                <img src="../assets/fotoPerfil.png" alt="no cargo la imagen" class=" w-40 h-40 rounded-full mt-10 mb-5 object-cover">
+            </div>
+            <div class=" flex flex-col space-x-5 items-center mt-5">
+                <p class=" text-md font-Nunito text-slate-900">Gestion:</p>
+                <input v-model="selectedGestion"  type="text" class=" w-xs  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder=" Ingresa gestion ejemplo:2023">
+                <div class=" flex flex-row  space-x-4">
+                <button  class=" w-38 bg-blue-950 rounded-lg p-2 text-sm font-Nunito text-white mt-5 cursor-pointer">Crear Nueva gestion</button>
+                <button  class=" w-38 bg-blue-950 rounded-lg p-2 text-sm font-Nunito text-white mt-5 cursor-pointer">Crear Reapertura</button>
+            </div>
+            </div>
+            
+        </div>
+        <div class=" mt-10 mb-10 bg-gray-100 p-5 rounded-lg w-5xl h-3/5 2xl:w-3xl 2xl:h-3/5">
             <p class=" text-slate-900 font-Nunito text-xl mt-5 ">Informacion de la Empresa</p>
             <div class=" grid grid-cols-4 mx-2 ">
                 <div class=" flex flex-col">
-                    <p class=" text-slate-900 font-Nunito font-bold text-sm mt-5">Razon Social/Nombre </p>
-                    <p class=" text-slate-900 font-Nunito text-sm mt-2">{{infoEmpresa[0].nombre_propietario}} </p>
+                    <p class=" text-slate-900 font-Nunito font-bold text-xs 2xl:text-sm mt-5">{{ infoEmpresa[0].razon_social ? 'Razon Social' : 'Nombre Propietario'  }} </p>
+                    <p class=" text-slate-900 font-Nunito text-xs 2xl:text-sm mt-2 uppercase">{{infoEmpresa[0].nombre_propietario}} </p>
                 </div>
                 <div class=" flex flex-col">
-                    <p class=" text-slate-900 font-Nunito font-bold text-sm mt-5">Nit </p>
-                    <p class=" text-slate-950 font-Nunito text-sm mt-2">{{ infoEmpresa[0].nit }} </p>
+                    <p class=" text-slate-900 font-Nunito font-bold text-xs 2xl:text-sm mt-5">Nit </p>
+                    <p class=" text-slate-950 font-Nunito text-xs 2xl:text-sm mt-2">{{ infoEmpresa[0].nit }} </p>
                 </div>
                 <div class=" flex flex-col">
-                    <p class=" text-slate-900 font-Nunito font-bold text-sm mt-5">Fecha Inscripcion </p>
-                    <p class=" text-slate-950 font-Nunito text-sm mt-2">{{ formatFecha || '—' }}</p>
+                    <p class=" text-slate-900 font-Nunito font-bold text-xs 2xl:text-sm mt-5">Fecha Inscripcion </p>
+                    <p class=" text-slate-950 font-Nunito text-xs  2xl:text-sm mt-2">{{ formatFecha || '—' }}</p>
                 </div>
-                <div class=" flex flex-col">
-                    <p class=" text-slate-900 font-Nunito font-bold text-sm mt-5">Departamento </p>
-                    <p class=" text-slate-950 font-Nunito text-sm mt-2">{{ infoEmpresa[0].departamento }} </p>
+                <div class=" flex flex-col" v-show="infoEmpresa[0].nro_testimonio">
+                    <p class=" text-slate-900 font-Nunito font-bold text-xs 2xl:text-sm mt-5">Nro Testimonio </p>
+                    <p class=" text-slate-950 font-Nunito text-xs 2xl:text-sm mt-2">{{ infoEmpresa[0].nro_testimonio }} </p>
+                </div>
+                <div class=" flex flex-col" v-show="!infoEmpresa[0].nro_testimonio">
+                    <p class=" text-slate-900 font-Nunito font-bold text-xs 2xl:text-sm mt-5">Departamento </p>
+                    <p class=" text-slate-950 font-Nunito text-xs 2xl:text-sm mt-2 uppercase">{{ infoEmpresa[0].departamento }} </p>
                 </div>
                 
+                
             </div>
-            <div class=" grid grid-cols-4 mx-2" v-if="mostrarEmpresa" >
-                <div class=" flex flex-col">
-                    <p class=" text-slate-900 font-Nunito font-bold text-sm mt-5">Nro Testimonio </p>
-                    <p class=" text-slate-950 font-Nunito text-sm mt-2">{{ infoEmpresa[0].nro_testimonio }} </p>
+            <div class=" grid grid-cols-4 mx-2">
+                
+                <div class=" flex flex-col" v-show="infoEmpresa[0].nro_poder">
+                    <p class=" text-slate-900 font-Nunito font-bold text-xs 2xl:text-sm mt-5">Nro Poder </p>
+                    <p class=" text-slate-950 font-Nunito text-xs 2xl:text-sm mt-2">{{ infoEmpresa[0].nro_poder }} </p>
+                </div>
+                <div class=" flex flex-col" v-show="infoEmpresa[0].notaria">
+                    <p class=" text-slate-900 font-Nunito font-bold text-xs 2xl:text-sm mt-5">Notaria </p>
+                    <p class=" text-slate-950 font-Nunito text-xs 2xl:text-sm mt-2 uppercase">{{ infoEmpresa[0].notaria }} </p>
+                </div>
+                <div class=" flex flex-col" v-show="infoEmpresa[0].nro_testimonio">
+                    <p class=" text-slate-900 font-Nunito font-bold text-xs 2xl:text-sm mt-5">Departamento </p>
+                    <p class=" text-slate-950 font-Nunito text-xs 2xl:text-sm mt-2 uppercase">{{ infoEmpresa[0].departamento }} </p>
                 </div>
                 <div class=" flex flex-col">
-                    <p class=" text-slate-900 font-Nunito font-bold text-sm mt-5">Nro Poder </p>
-                    <p class=" text-slate-950 font-Nunito text-sm mt-2">{{ infoEmpresa[0].nro_poder }} </p>
+                    <p class=" text-slate-900 font-Nunito font-bold text-xs 2xl:text-sm mt-5">Municipio </p>
+                    <p class=" text-slate-950 font-Nunito text-xs 2xl:text-sm mt-2 uppercase">{{ infoEmpresa[0].municipio }}</p>
                 </div>
-                <div class=" flex flex-col">
-                    <p class=" text-slate-900 font-Nunito font-bold text-sm mt-5">Notaria </p>
-                    <p class=" text-slate-950 font-Nunito text-sm mt-2">{{ infoEmpresa[0].notaria }} </p>
+                <div class=" flex flex-col" v-show="!infoEmpresa[0].nro_poder">
+                    <p class=" text-slate-900 font-Nunito font-bold text-xs 2xl:text-sm mt-5">Zona </p>
+                    <p class=" text-slate-950 font-Nunito text-xs 2xl:text-sm mt-2 uppercase">{{ infoEmpresa[0].zona }}</p>
                 </div>
-                <div class=" flex flex-col">
-                    <p class=" text-slate-900 font-Nunito font-bold text-sm mt-5">Departamento </p>
-                    <p class=" text-slate-950 font-Nunito text-sm mt-2">{{ infoEmpresa[0].departamento }} </p>
+                <div class=" flex flex-col" v-show="!infoEmpresa[0].notaria">
+                    <p class=" text-slate-900 font-Nunito font-bold text-xs 2xl:text-sm mt-5">Tipo via </p>
+                    <p class=" text-slate-950 font-Nunito text-xs 2xl:text-sm mt-2 uppercase">{{ infoEmpresa[0].tipo_via }}</p>
                 </div>
             </div>
             <div class=" grid grid-cols-4 mx-2">
-                <div class=" flex flex-col">
-                    <p class=" text-slate-900 font-Nunito font-bold text-sm mt-5">Municipio </p>
-                    <p class=" text-slate-950 font-Nunito text-sm mt-2">{{ infoEmpresa[0].municipio }}</p>
+                
+                <div class=" flex flex-col" v-show="infoEmpresa[0].nro_poder">
+                    <p class=" text-slate-900 font-Nunito font-bold text-xs 2xl:text-sm mt-5">Zona </p>
+                    <p class=" text-slate-950 font-Nunito text-xs 2xl:text-sm mt-2 uppercase">{{ infoEmpresa[0].zona }}</p>
+                </div>
+                <div class=" flex flex-col" v-show="infoEmpresa[0].notaria">
+                    <p class=" text-slate-900 font-Nunito font-bold text-xs 2xl:text-sm mt-5">Tipo via </p>
+                    <p class=" text-slate-950 font-Nunito text-xs 2xl:text-sm mt-2 uppercase">{{ infoEmpresa[0].tipo_via }}</p>
                 </div>
                 <div class=" flex flex-col">
-                    <p class=" text-slate-900 font-Nunito font-bold text-sm mt-5">Zona </p>
-                    <p class=" text-slate-950 font-Nunito text-sm mt-2">{{ infoEmpresa[0].zona }}</p>
+                    <p class=" text-slate-900 font-Nunito font-bold text-xs  2xl:text-sm mt-5">Nombre de via </p>
+                    <p class=" text-slate-950 font-Nunito text-xs 2xl:text-sm mt-2 uppercase">{{ infoEmpresa[0].nombre_via }}</p>
                 </div>
                 <div class=" flex flex-col">
-                    <p class=" text-slate-900 font-Nunito font-bold text-sm mt-5">Tipo via </p>
-                    <p class=" text-slate-950 font-Nunito text-sm mt-2">{{ infoEmpresa[0].tipo_via }}</p>
+                    <p class=" text-slate-900 font-Nunito font-bold text-xs 2xl:text-sm mt-5">Nro puerta </p>
+                    <p class=" text-slate-950 font-Nunito text-xs 2xl:text-sm mt-2">{{ infoEmpresa[0].nro_puerta }}</p>
                 </div>
-                <div class=" flex flex-col">
-                    <p class=" text-slate-900 font-Nunito font-bold text-sm mt-5">Nombre de via </p>
-                    <p class=" text-slate-950 font-Nunito text-sm mt-2">{{ infoEmpresa[0].nombre_via }}</p>
+                <div class=" flex flex-col" v-show="!infoEmpresa[0].nro_testimonio">
+                    <p class=" text-slate-900 font-Nunito font-bold text-xs  2xl:text-sm mt-5">Referencias </p>
+                    <p class=" text-slate-950 font-Nunito text-xs 2xl:text-sm mt-2 uppercase">{{ infoEmpresa[0].referencias }}</p>
                 </div>
-            
             </div>
             <div class="grid grid-cols-4 mx-2">
-                <div class=" flex flex-col">
-                    <p class=" text-slate-900 font-Nunito font-bold text-sm mt-5">Nro puerta </p>
-                    <p class=" text-slate-950 font-Nunito text-sm mt-2">{{ infoEmpresa[0].nro_puerta }}</p>
+                
+                <div class=" flex flex-col" v-show="infoEmpresa[0].nro_testimonio">
+                    <p class=" text-slate-900 font-Nunito font-bold text-xs  2xl:text-sm mt-5">Referencias </p>
+                    <p class=" text-slate-950 font-Nunito text-xs 2xl:text-sm mt-2 uppercase">{{ infoEmpresa[0].referencias }}</p>
                 </div>
                 <div class=" flex flex-col">
-                    <p class=" text-slate-900 font-Nunito font-bold  text-sm mt-5">Referencias </p>
-                    <p class=" text-slate-950 font-Nunito text-sm mt-2">{{ infoEmpresa[0].referencias }}</p>
-                </div>
-                <div class=" flex flex-col">
-                    <p class=" text-slate-900 font-Nunito font-bold text-sm mt-5">Actividad Principal </p>
-                    <p class=" text-slate-950 font-Nunito text-sm mt-2">{{ infoEmpresa[0].actividad_principal }}</p>
+                    <p class=" text-slate-900 font-Nunito font-bold text-xs 2xl:text-sm mt-5">Actividad Principal </p>
+                    <p class=" text-slate-950 font-Nunito text-xs 2xl:text-sm mt-2 uppercase">{{ infoEmpresa[0].actividad_principal }}</p>
                 </div>
             </div>
             <div class="grid grid-cols-1 mx-2">
                 <div class=" flex flex-col">
-                    <p class=" text-slate-900 font-Nunito font-bold text-sm mt-5">Actividad Secundaria </p>
+                    <p class=" text-slate-900 font-Nunito font-bold text-xs 2xl:text-sm mt-5">Actividad Secundaria </p>
                     <ul class="flex flex-row flex-wrap gap-2">
-                        <li v-for="(actividad,index) in actividad_secundaria" :key="index" class="bg-blue-400 px-3 py-1 rounded-lg text-slate-900 font-Nunito text-md">
+                        <li v-for="(actividad,index) in actividad_secundaria" :key="index" class="bg-blue-400 px-3 py-1 rounded-lg text-slate-900 font-Nunito text-sm uppercase">
                             {{ actividad }}
                         </li>
                     </ul>
@@ -240,20 +270,7 @@ export default {
             
             
         </div>
-        <div class=" flex flex-col">
-            <div class=" flex flex-col mx-auto cursor-pointer ">
-                <p class="text-2xl font-Nunito font-semibold text-slate-900 mt-10 mx-auto">{{ infoEmpresa[0].razon_social || infoEmpresa[0].nombre_propietario }}</p>
-                <img src="../assets/fotoPerfil.png" alt="no cargo la imagen" class=" w-40 h-40 rounded-full mt-10 mb-5 object-cover">
-            </div>
-            <div class=" flex flex-col space-x-5 items-center mt-5">
-                <p class=" text-md font-Nunito text-slate-900">Gestion:</p>
-                    <input v-model="selectedGestion"  type="text" class=" w-xs  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder=" Ingresa gestion ejemplo:2023">
-            </div>
-        <div class=" grid grid-cols-2 gap-x-2">
-            <button  class=" bg-blue-950 rounded-lg p-2 text-sm font-Nunito text-white mt-5 cursor-pointer">Crear Nueva gestion</button>
-            <button  class=" bg-blue-950 rounded-lg p-2 text-sm font-Nunito text-white mt-5 cursor-pointer">Crear Reapertura</button>
-        </div>
-        </div>
+        
         
         
         

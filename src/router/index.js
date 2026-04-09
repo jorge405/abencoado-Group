@@ -6,6 +6,10 @@ import cotizaciones from '../views/cotizaciones.vue';
 import PlanCuentas from '@/views/planCuentas.vue';
 import LibroDiario from '@/views/libroDiario.vue';
 import libroMayor from '@/views/libroMayor.vue';
+import sumaSaldos from '@/views/sumasySaldos.vue';
+import estadoResultados from '@/views/estadoResultados.vue';
+import balanceGeneral from '@/views/balanceGeneral.vue';
+
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -44,7 +48,23 @@ const router = createRouter({
       path:'/libroMayor',
       name:'libroMayor',
       component:libroMayor
+    },
+    {
+      path:'/sumaYsaldos',
+      name:'sumaYsaldos',
+      component:sumaSaldos
+    },
+    {
+      path:'/estadoResultados',
+      name:'estadoResultados',
+      component:estadoResultados
+    },
+    {
+      path:'/balanceGeneral',
+      name:'balanceGeneral',
+      component:balanceGeneral
     }
+   
     
   ],
 })

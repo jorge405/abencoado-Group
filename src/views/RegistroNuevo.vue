@@ -4,6 +4,10 @@ import 'flatpickr/dist/flatpickr.css'
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import fondoRegistro from '@/assets/fondoRegistro.svg';
+import api from '@/services/api.js';
+import ValidationTooltip from '@/components/ValidationTooltip.vue';
+
+
 
 
 export default{
@@ -50,8 +54,8 @@ export default{
         nombre_propietario:'',
         nro_testimonio:'',
         nro_poder:'',
-        notaria:'',
-        nit:'',
+        notaria:'', 
+        nit:null,
         direccion:'',
         municipio:'',
         zona:'',
@@ -62,13 +66,57 @@ export default{
         referencias:'',
         actividad_principal:'',
         correo_electronico:'',
-        pass:''
+        pass:'',
+        errors:{
+            razon_social:false,
+            nit:false,
+            correo_electronico:false,
+            fecha_inscripcion:false,
+            actividad_principal:false,
+            password:false,
+            empresa:false
+        }
+
     }
     },
     mounted(){
         this.getTipoEmpresa();
     },
     methods:{
+        validaciones(){
+            this.errors.razon_social=this.razon_social.trim()==='';
+            // NIT
+            if (!this.nit) {
+            this.errors.nit = true;
+             } else {
+            const nitStr = this.nit.toString();
+            // Marcamos error si: NO es número O es menor/igual a 8 O es mayor a 10
+            this.errors.nit = isNaN(this.nit) || nitStr.length <= 8 || nitStr.length > 10;
+            }
+            const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                // Agregamos validación de que no esté vacío también si es obligatorio
+                if (this.correo_electronico.trim() === '') {
+                    this.errors.correo_electronico = true;
+                } else {
+                    this.errors.correo_electronico = !regex.test(this.correo_electronico);
+                }
+            this.errors.fecha_inscripcion= this.fecha_inscripcion.trim()==='';
+            this.errors.actividad_principal=this.actividad_principal.trim()===''; 
+            // PASSWORD
+            if (this.pass==='') {
+            this.errors.password = true;
+             } else {
+            const nitStr = this.pass.toString();
+            // Marcamos error si: NO es número O es menor/igual a 8 O es mayor a 10
+            this.errors.password = nitStr.length < 8 || nitStr.length > 12;
+            }
+            // empresa unipersonal
+            this.errors.empresa= this.selected_empresa==='UNIPERSONAL' && this.nombre_propietario.trim()===''
+            if (this.selected_empresa==='UNIPERSONAL') {
+                this.errors.razon_social=false;
+            }
+
+        },
         agregarActividad(){
             if(this.actividad_s.trim()==='') return;
             this.actividad_secundaria.push(this.actividad_s);
@@ -89,8 +137,10 @@ export default{
         },
         async registroNuevo(){
             const filterTipEmpresa= this.tip_empresa.filter(item => item.tipo_empresa===this.selected_empresa);
-            
-            try {
+            this.validaciones();
+            if (!this.errors.razon_social && !this.errors.nit && !this.errors.correo_electronico && !this.errors.fecha_inscripcion && !this.errors.actividad_principal && !this.errors.password  && !this.errors.empresa ) {
+                
+                try {
 
                 const datos={
                     razon_social:this.razon_social,
@@ -109,62 +159,22 @@ export default{
                     nro_puerta:this.nro_puerta,
                     referencias:this.referencias,
                     actividad_principal:this.actividad_principal,
-                    cod_tpEmpresa:filterTipEmpresa[0].cod_tpEmpresa
+                    cod_tpEmpresa:filterTipEmpresa[0].cod_tpEmpresa,
+                    actividad_secundaria:this.actividad_secundaria,
+                    usuario:{
+                        correo_electronico:this.correo_electronico,
+                        pass:this.pass,
+                        cod_tipUser:2,
+                        // fatla aqui el cod_empresa
+                    }
+
                 } 
-                const responseRegistroNuevo= await axios.post('/addEmpresa',datos) 
-                if (responseRegistroNuevo.data.estado==='error'){
+                const responseRegistroNuevo= await api.post('/addEmpresa',datos) 
+                if (responseRegistroNuevo.data.status==='error'){
                     Swal.fire({
                         icon:'error',
                         title:'Registro no completado',
                         text:'No se pudo completar el registro, por favor intente nuevamente'
-                    })
-                    return;
-                }
-                console.log(responseRegistroNuevo.data);
-                    const responseUsuario= await axios.post('/addUser',{
-                        correo_electronico:this.correo_electronico,
-                        pass:this.pass,
-                        cod_tipUser:2,
-                        cod_empresa:responseRegistroNuevo.data.cod_empresa
-                    })
-                    if (responseUsuario.data.estado==='error') {
-                        Swal.fire({
-                            icon:'error',
-                            title:'Usuario no registrado',
-                            text:'No se pudo completar el registro del usuario, por favor intente nuevamente'
-                        })
-                        return;
-                    }
-                    
-                    const responseActividadSecundaria= await axios.post('/addActividadSecundaria',{
-                        actividad_secundaria:this.actividad_secundaria
-                    })
-
-                    if (responseActividadSecundaria.data.estado==='error') {
-                        Swal.fire({
-                            icon:'error',
-                            title:'Abencoado Group',
-                            text:'actividad secundaria no registrado'
-                        })
-                        return;
-                    }
-
-                    const responseActividad= await axios.post('/addActividades',{
-                        cod_empresa:responseRegistroNuevo.data.cod_empresa,
-                        cod_actividadSecundaria:responseActividadSecundaria.data.cod_actividadSecundaria
-                    })
-                    if (responseActividad.data.estado==='error') {
-                        Swal.fire({
-                            icon:'error',
-                            title:'Abencoado Group',
-                            text:'actividades no registrado'
-                        })
-                        return;
-                    }
-                    Swal.fire({
-                        icon:'success',
-                        title:'Registro completado',
-                        text:'El registro se completo con exito'
                     })
                     this.razon_social='';
                     this.nombre_propietario='';
@@ -188,7 +198,41 @@ export default{
                     this.actividad_secundaria=[];
                     this.activeRazonSocial=false;
                     this.activeNombrePropietario=false;
-                this.$router.push('/');
+                    this.$router.push('/')
+                }else if(responseRegistroNuevo.data.status==='ok'){
+                    Swal.fire({
+                        icon:'success',
+                        title:'Abencoado Group',
+                        text:'Empresa creada exitosamente, ya puedes iniciar session'
+                    })
+                    this.$router.push('/');
+                    this.razon_social='';
+                    this.nombre_propietario='';
+                    this.nro_testimonio='';
+                    this.nro_poder='';
+                    this.notaria='';
+                    this.nit='';
+                    this.fecha_inscripcion='';
+                    this.direccion='';
+                    this.municipio='';
+                    this.zona='';
+                    this.selected_departamento='';
+                    this.via='';
+                    this.nombre_via='';
+                    this.nro_puerta='';
+                    this.referencias='';
+                    this.actividad_principal='';
+                    this.correo_electronico='';
+                    this.pass='';
+                    this.selected_empresa='';
+                    this.actividad_secundaria=[];
+                    this.activeRazonSocial=false;
+                    this.activeNombrePropietario=false;
+                }
+            
+                    
+                
+
             } catch (error) {
                 console.log('problemas en el servidor: ',error)
                 Swal.fire({
@@ -196,17 +240,28 @@ export default{
                     title:'Error del servidor',
                     text:'Por favor intente mas tarde'
                 });
-                return ;
+                return ; 
+            } 
+            }else{
+                Swal.fire({
+                    icon:'warning',
+                    text:'Faltan campos por completar'
+                })
             }
-        }
+            
+        },
+        
     },
     watch:{
         selected_empresa(newval){
-            
-            
+            this.selected_empresa=newval;
             if (newval==='UNIPERSONAL') { 
                 this.activeRazonSocial=true;
                 this.activeNombrePropietario=false;
+                this.razon_social='';
+                this.nro_testimonio='';
+                this.nro_poder='';
+                this.notaria=''
             }else{
                 this.activeRazonSocial=false;
                 this.activeNombrePropietario=true;
@@ -214,7 +269,8 @@ export default{
         }
     },
     components:{
-        flatPickr
+        flatPickr,
+        ValidationTooltip
     }
     
 
@@ -225,7 +281,7 @@ export default{
 <div class="grid grid-cols-2">
 <div class="flex flex-col w-full mt-20 ml-10">
 <p class=" font-Nunito text-lg text-slate-900 mb-5">Eres Nuevo/Registrate Aqui</p>    
-<form>
+<form @submit.prevent="registroNuevo">
 <div class="grid grid-cols-3 gap-x-2 mb-4">
 <div class="flex flex-col">
 <label class=" font-Nunito text-sm text-slate-900 mb-2">Tipo de Empresa</label>
@@ -234,27 +290,29 @@ export default{
 <option v-for="item in tip_empresa"  :key="item.cod_tpEmpresa" :value="item.tipo_empresa" >{{ item.tipo_empresa }}</option>    
 </select>
 </div>
-<div class="flex flex-col">
+<div class="flex flex-col relative">
 <label class=" text-sm font-Nunito text-slate-900 mb-2">Razon Social</label>     
-<input v-model="razon_social" :disabled="activeRazonSocial" :class="activeRazonSocial ===true ?'bg-gray-300' : 'bg-transparent'" type="text" class=" rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder=" Ingresa la razon social de la empresa">
+<input v-model="razon_social" @blur="validateRazon_social"   :disabled="activeRazonSocial" :class="activeRazonSocial ===true ?'bg-gray-300' : 'bg-transparent'" type="text" class=" rounded-xl border border-gray-300 p-2 placeholder:text-sm  focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 uppercase placeholder:lowercase " placeholder=" Ingresa la razon social de la empresa">
+<p v-show="errors.razon_social" class=" text-xs text-red-600 animate__animated animate__backInUp">! campo es obligatorio</p>
 </div>
 <div class="flex flex-col">
-<label class=" text-sm font-Nunito text-slate-900 mb-2">Nombre Propietario/Representante Legal</label>     
-<input v-model="nombre_propietario"  type="text" class=" rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder=" Ingresa nombre completo">        
+<label class=" text-sm font-Nunito text-slate-900 mb-2">Propietario/Representante Legal</label>     
+<input v-model="nombre_propietario"  type="text" class=" rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 uppercase placeholder:lowercase " placeholder=" Ingresa nombre completo">        
+<p v-show="errors.empresa" class=" text-xs text-red-600 animate__animated animate__backInUp">!campo es obligatorio</p>
 </div>
 </div>
 <div class="grid grid-cols-3 gap-x-2 mb-3">
 <div class=" flex flex-col">
     <label class=" text-sm font-Nunito text-slate-900 mb-2">Nro testimonio</label>     
-    <input v-model="nro_testimonio" :disabled="activeRazonSocial" :class="activeRazonSocial===true ?'bg-gray-300' :'bg-transparent'" type="text" class=" rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder=" Ingresa nro notaria">
+    <input v-model="nro_testimonio" :disabled="activeRazonSocial" :class="activeRazonSocial===true ?'bg-gray-300' :'bg-transparent'" type="text" class=" rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 uppercase placeholder:lowercase " placeholder=" Ingresa nro notaria">
 </div>    
 <div class=" flex flex-col">
     <label class=" text-sm font-Nunito text-slate-900 mb-2">Nro Poder</label>     
-    <input v-model="nro_poder" :disabled="activeRazonSocial" :class="activeRazonSocial===true ?'bg-gray-300' :'bg-transparent'" type="text" class=" rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder=" Ingresa nro poder">
+    <input v-model="nro_poder" :disabled="activeRazonSocial" :class="activeRazonSocial===true ?'bg-gray-300' :'bg-transparent'" type="text" class=" rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 uppercase placeholder:lowercase " placeholder=" Ingresa nro poder">
 </div>
 <div class=" flex flex-col">
     <label class=" text-sm font-Nunito text-slate-900 mb-2">Notaria</label>     
-    <input v-model="notaria" :disabled="activeRazonSocial" :class="activeRazonSocial===true ?'bg-gray-300' :'bg-transparent'" type="text" class=" rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder=" Ingresa la notaria">
+    <input v-model="notaria" :disabled="activeRazonSocial" :class="activeRazonSocial===true ?'bg-gray-300' :'bg-transparent'" type="text" class=" rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 uppercase placeholder:lowercase " placeholder=" Ingresa la notaria">
 </div>
 </div>    
 <div class="grid grid-cols-3 gap-x-2 mb-4">
@@ -282,25 +340,25 @@ export default{
                             fill=""/></svg>
                             </span>
     </div>
+    <p v-show="errors.fecha_inscripcion" class=" text-xs text-red-600 animate__animated animate__backInUp">!Este campo es obligatorio fecha vacia</p>
 </div>
 <div class="flex flex-col">
 <label class=" text-sm font-Nunito text-slate-900">Nit</label>
-<input v-model="nit" type="text" class=" rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="ingresa tu Nit ej:786848353">    
+<input v-model="nit" type="text" class=" rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 uppercase placeholder:lowercase" placeholder="ingresa tu Nit ej:786848353">    
+<p v-show="errors.nit" class=" text-xs text-red-600 animate__animated animate__backInUp">!campo obligatorio / numero invalido</p>
 </div>
-<div class="flex flex-col">
-<label class=" text-sm font-Nunito text-slate-900">Direccion</label>
-<input v-model="direccion" type="text" class=" rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="ingresa tu direccion">
-</div>
+
 </div> 
 <div class=" flex flex-col mt-4">
     <label class="text-sm font-Nunito text-slate-900 mb-2">Actividad principal</label>     
-    <input v-model="actividad_principal" type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder="actividad principal de la empresa">
+    <input v-model="actividad_principal" type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 uppercase placeholder:lowercase " placeholder="actividad principal de la empresa">
+    <p v-show="errors.actividad_principal" class=" text-xs text-red-600 animate__animated animate__backInUp">!Este campo es obligatorio actividad principal vacio</p>
 </div>
 <div class=" flex flex-col mt-4">
     <label class="text-sm font-Nunito text-slate-900 mb-2">Actividad secundaria</label>
     <div class=" flex flex-row space-x-2">
-        <input v-model="actividad_s" type="text" class=" w-3xl rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder="actividad secundaria de la empresa">
-        <button @click="agregarActividad" type="button" class=" bg-gray-300 w-20 p-2 rounded-xl"><span class=" inline-block"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><g fill="none" fill-rule="evenodd"><path d="m12.594 23.258l-.012.002l-.071.035l-.02.004l-.014-.004l-.071-.036q-.016-.004-.024.006l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.016-.018m.264-.113l-.014.002l-.184.093l-.01.01l-.003.011l.018.43l.005.012l.008.008l.201.092q.019.005.029-.008l.004-.014l-.034-.614q-.005-.019-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.003-.011l.018-.43l-.003-.012l-.01-.01z"/><path fill="#354745" d="M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4h4a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-4v4a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-4H5a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h4z"/></g></svg></span></button>
+        <input v-model="actividad_s" type="text" class=" w-2xl rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 uppercase placeholder:lowercase " placeholder="actividad secundaria de la empresa">
+        <button @click="agregarActividad" type="button" class=" text-slate-950 cursor-pointer bg-gray-300 w-20 p-2 rounded-xl">Agregar</button>
     </div>
     <div class=" mt-5 flex flex-row">
         <ul class="grid grid-cols-4 gap-x-5">
@@ -321,11 +379,11 @@ export default{
 </div>    
 <div class=" flex flex-col">
 <label class=" text-sm font-Nunito text-slate-900 mb-2">Municipio</label>     
-<input v-model="municipio" type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder=" Ingresa nombre completo">
+<input v-model="municipio" type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 uppercase placeholder:lowercase " placeholder=" Ingresa nombre completo">
 </div>
 <div class=" flex flex-col">
 <label class=" text-sm font-Nunito text-slate-900 mb-2">Zona</label>     
-<input v-model="zona" type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder=" Ingresa nombre completo">
+<input v-model="zona" type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 uppercase placeholder:lowercase " placeholder=" Ingresa nombre completo">
 </div>
 </div>
 <div class="grid grid-cols-3 gap-x-2">
@@ -338,38 +396,41 @@ export default{
 </div>
 <div class="flex flex-col">
 <label class=" text-sm font-Nunito text-slate-900 mb-2">Nombre de la via</label>     
-<input v-model="nombre_via" type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder=" Ingresa nombre de la via">
+<input v-model="nombre_via" type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 uppercase placeholder:lowercase " placeholder=" Ingresa nombre de la via">
 </div>
 <div class="flex flex-col">
 <label class=" text-sm font-Nunito text-slate-900 mb-2">Numero domicilio/ puerta</label>     
-<input v-model="nro_puerta" type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder="numero de puerta">
+<input v-model="nro_puerta" type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 uppercase placeholder:lowercase " placeholder="numero de puerta">
 </div>
 </div>
 <div class=" flex flex-col mt-4">
     <label class="text-sm font-Nunito text-slate-900 mb-2">Referencias</label>     
-    <input v-model="referencias" type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder="referencias de la direccion">
+    <input v-model="referencias" type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 uppercase placeholder:lowercase " placeholder="referencias de la direccion">
 </div>
 <p class=" font-Nunito text-lg text-slate-900 mt-4 mb-4">Registro Usuario en el sistema</p>
 <div class="grid grid-cols-2 gap-x-2 mt-4">
     <div class="flex flex-col">
         <label class="text-sm font-Nunito text-slate-900 mb-2">Correo Electronico</label>     
         <input v-model="correo_electronico" type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder="ingrese correo electronico empresarial">
+        <p v-show="errors.correo_electronico" class=" text-xs text-red-600 animate__animated animate__backInUp">!Este campo es obligatorio/correo invalido</p>
     </div>
     <div class="flex flex-col">
         <label class="text-sm font-Nunito text-slate-900 mb-2">Contraseña</label>     
-        <input v-model="pass" type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder="ingrese una contraseña segura mayor a 8 caracteres">
+        <input v-model="pass" type="text" class="  rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 " placeholder="ingrese una contraseña segura mayor a 8 y menor a 12 caracteres">
+        <p v-show="errors.password" class=" text-xs text-red-600 animate__animated animate__backInUp">!campo obligatorio contraseña/ contraseña invalida</p>
     </div>
     
 </div>
 <p class=" font-Nunito text-lg text-slate-900 mt-4 mb-4">Procesos de Contabilidad</p>
 <div class=" grid grid-cols-2 mt-4 gap-x-1 ">
-<button class="bg-yellow-500 p-2 w-2sm text-white font-Nunito text-md rounded-lg">Automatico</button>
-<button class="bg-yellow-500 p-2 w-2sm text-white font-Nunito text-md rounded-lg">Manual</button>
+<button type="button" disabled class="bg-yellow-500 p-2 w-2sm text-white font-Nunito text-md rounded-lg">Automatico</button>
+<button type="button" disabled class="bg-yellow-500 p-2 w-2sm text-white font-Nunito text-md rounded-lg">Manual</button>
 </div>
 <p class=" text-slate-900 text-sm font-Nunito">Selecciona si los procesos de contabilidad seran automaticos o manuales</p>
 
+
+<button type="submit"   class=" w-full bg-green-500 py-2 px-8 rounded-lg text-white mt-5 mb-5 font-Nunito cursor-pointer">Registrar Nuevo</button>
 </form>
-<button @click="registroNuevo" type="button" class=" bg-green-500 py-2 px-8 rounded-lg text-white mt-5 mb-5 font-Nunito cursor-pointer">Reistrar Nuevo</button>
 </div>    
 <div class=" flex flex-col mt-20 ml-30">
     <img :src="image1" @error="image1=image2" alt="no se pudo cargar la imagen" width="500px" height="500px"> 
