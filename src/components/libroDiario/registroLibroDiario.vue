@@ -388,7 +388,7 @@ export default{
         },
         async getCotizacionOne(fecha){
         try {
-            const responsefecha= await axios.post('http://localhost:3000/abencoado/getCotizacionOne',{fecha_comprobante:fecha})
+            const responsefecha= await api.post('/getCotizacionOne',{fecha_comprobante:fecha})
             this.dolar=responsefecha.data.estado==='vacio' ? '': responsefecha.data.rows[0].dolar;
             this.ufv=responsefecha.data.estado==='vacio' ? '': responsefecha.data.rows[0].ufv;
         } catch (error) {

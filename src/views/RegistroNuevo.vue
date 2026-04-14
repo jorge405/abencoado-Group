@@ -124,7 +124,7 @@ export default{
         },
         async getTipoEmpresa(){
             try {
-                const responseTipoEmpresa= await axios.get('http://localhost:3000/abencoado/getTipEmpresa')
+                const responseTipoEmpresa= await api.get('/getTipEmpresa')
                 if (responseTipoEmpresa.data.estado==='error') {
                     return this.tip_empresa=[];
                 }else if(responseTipoEmpresa.data.estado==='ok'){

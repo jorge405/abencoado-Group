@@ -103,6 +103,7 @@ export default {
 
                     
                 } 
+                console.log(this.actividad_secundaria)
              
                 
             } catch (error) {
@@ -258,14 +259,17 @@ export default {
                 </div>
             </div>
             <div class="grid grid-cols-1 mx-2">
-                <div class=" flex flex-col">
-                    <p class=" text-slate-900 font-Nunito font-bold text-xs 2xl:text-sm mt-5">Actividad Secundaria </p>
-                    <ul class="flex flex-row flex-wrap gap-2">
-                        <li v-for="(actividad,index) in actividad_secundaria" :key="index" class="bg-blue-400 px-3 py-1 rounded-lg text-slate-900 font-Nunito text-sm uppercase">
-                            {{ actividad }}
-                        </li>
-                    </ul>
-                </div>
+                    <div class="flex flex-col">
+                        <p class="text-slate-900 font-Nunito font-bold text-xs 2xl:text-sm mt-5">Actividad Secundaria</p>
+                        
+                        <ul class="flex flex-row flex-wrap gap-2 mt-2">
+                            <li v-for="(actividad, index) in (typeof actividad_secundaria === 'string' ? JSON.parse(actividad_secundaria) : actividad_secundaria)" 
+                                :key="index" 
+                                class="bg-blue-400 px-3 py-1 rounded-lg text-slate-900 font-Nunito text-sm uppercase">
+                                {{ actividad }}
+                            </li>
+                        </ul>
+                    </div>
             </div>
             
             
