@@ -30,6 +30,7 @@ export default{
             key:'abencoadoGroup',
             MostrarEstadoResultado:true,
             mostrarConsultarFecha:false,
+            nombre_empresa:'',
             fecha1:'',
             fecha2:'',
             flatpickrTimeConfig:{
@@ -42,39 +43,47 @@ export default{
             wrap: false,
             }, 
             fechadata1:[],
-            fechadata2:[]
+            fechadata2:[],
+            selectedNivel:'',
+            nivelCuenta:[1,2,3,4,5]
         }
     },
     mounted(){
         const sF1 = sessionStorage.getItem('fecha1');
         const sF2 = sessionStorage.getItem('fecha2');
-        if (sF1 && sF2 ) {
+        const nivel=parseInt(sessionStorage.getItem('nivel'));
+        if (sF1 && sF2 && nivel ) {
             this.fecha1 = sF1;
             this.fecha2 = sF2;
-            
+            this.selectedNivel=nivel
             this.estadoResultado();
         } 
     },
     methods:{
         async estadoResultado(){
+            const nombreEmpresa= CryptoJS.AES.decrypt(Cookies.get('dataEmp'),this.key).toString(CryptoJS.enc.Utf8); 
+            this.nombre_empresa=nombreEmpresa.toUpperCase();
+            
             const decryptEmpresa=CryptoJS.AES.decrypt(Cookies.get('emp'),this.key).toString(CryptoJS.enc.Utf8); 
-
             const f1 = this.fecha1 || sessionStorage.getItem('fecha1');
-            const f2 = this.fecha2 || sessionStorage.getItem('fecha2');  
+            const f2 = this.fecha2 || sessionStorage.getItem('fecha2');
+            const nivel=parseInt(this.selectedNivel) || parseInt(sessionStorage.getItem('nivel'))  
 
             try {
                 const responseEstadoResultado= await api.post('/estadoResultados',{
                     cod_empresa:parseInt(decryptEmpresa),
                     fecha_inicio:f1,
-                    fecha_final:f2
+                    fecha_final:f2,
+                    nivel_maximo:nivel
                 })
                 
                 if (responseEstadoResultado.data.status==='vacio') {
                     this.listaEstadoResultados=[];
                     Toast.fire({
                         icon:'warning',
-                        text:'No se genero el reporte de estado de resultados'
+                        text:'No se encontraron movimientos para generar el reporte estado resultados'
                     })
+                    this.mostrarConsultarFecha=false;
                 }else if(responseEstadoResultado.data.status==='ok'){
                     Toast.fire({
                         icon:'success',
@@ -86,9 +95,11 @@ export default{
 
                         sessionStorage.setItem('fecha1',f1);
                         sessionStorage.setItem('fecha2',f2);
+                        sessionStorage.setItem('nivel',nivel)
                         // Aseguramos que las variables locales de Vue tengan el valor
                         this.fecha1 = f1;
                         this.fecha2 = f2;
+                        this.selectedNivel=nivel;
 
                         // calculo de fechas mostradas 
                         const resultado = this.fecha1.split('-').reverse().join('-').replace(/-(\d{2})-/, (match, m) => `-${new Date(0, m - 1).toLocaleString('es', { month: 'long' })}-`).split('-').reverse().join('-');
@@ -225,8 +236,8 @@ export default{
             <button  class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 font-bold text-xs uppercase cursor-pointer">
                 Actualizar Reporte
             </button>
-            <generarExcel :datos="listaEstadoResultados" :totales="totales" :fecha1="fechadata1" :fecha2="fechadata2" titulo="ESTADO DE RESULTADOS" empresa="ABENCOADO GROUP"></generarExcel>
-            <exportarPDF :datos="listaEstadoResultados" :totales="totales" :periodo="fechadata2"  :titulo="'ESTADO DE RESULTADOS'"/>
+            <generarExcel :datos="listaEstadoResultados" :totales="totales" :empresa="nombre_empresa" :fecha1="fechadata1" :fecha2="fechadata2" titulo="ESTADO DE RESULTADOS" ></generarExcel>
+            <exportarPDF :datos="listaEstadoResultados" :totales="totales" :periodo="fechadata2" :empresa="nombre_empresa" :titulo="'ESTADO DE RESULTADOS'"/>
         </div>
       </div>
     </div>
@@ -297,7 +308,13 @@ export default{
                         </div>
                         
                     </div>
-                    
+                    <div class="flex flex-col space-y-2 mb-5 ">
+                        <label class=" text-Nunito text-slate-950 text-sm" >Nivel de Cuenta</label>
+                        <select  v-model="selectedNivel" class=" text-slate-950 p-2 border w-sm border-gray-200 rounded-xl placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10  ">
+                            <option value="" selected disabled class=" font-Nunito text-xs placeholder:text-sm text-slate-950 ">Seleccione nivel de Cuenta</option>
+                            <option v-for="(item,index) in nivelCuenta" :key="index" :value="item">{{ item }}</option>
+                        </select>
+                    </div>
                     <div class=" flex flex-row space-x-4 justify-center">
                         <button type="submit"  class=" bg-blue-950 w-50  text-sm rounded-lg p-2 cursor-pointer">Aceptar</button>
                         <button type="button" @click="cerrarModalfecha" class=" bg-red-800 w-50 text-sm rounded-lg p-2 cursor-pointer">Cancelar</button>

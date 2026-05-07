@@ -2,7 +2,7 @@
 import { toCanvas } from 'html-to-image';
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
-
+import api from '@/services/api.js';
 
 export default{
     props:{
@@ -10,18 +10,24 @@ export default{
         titulo:String,
         datosExtra: Object,     // Recibirá todo el objeto datosEdit del padre
         convertirMontoALetras: Function, // Pasamos la función como prop o la defines aquí
-        nombreEmpresa:String
+        nombreEmpresa:String,
+        firmas:Array
 
     },
     data(){
         return{
             horaActual:'',
-            
-            HeadersComprobante:null
+            HeadersComprobante:null,
+            mostrarHora:null,
+            mostrarFecha:null,
+            configuracion:null,
+            firmas:[]
         }
+
     },
     mounted() {
             this.actualizarHora();
+            this.getConfiguraciones();
     },
     methods:{
         actualizarHora() {
@@ -87,6 +93,17 @@ export default{
     async generarPDF(accion = 'preview') {
       const elemento = this.$refs.pdfContent;
       try {
+
+        const responseConfiguracion= await api.get('/getConfiguracion');
+        
+        if (responseConfiguracion.data.status==='ok') {
+            
+            this.mostrarHora=responseConfiguracion.data.rows[0].mostrarHora===1 ? true : false;
+            this.mostrarFecha=responseConfiguracion.data.rows[0].mostrarFecha ===1 ? true : false;        
+        }else if(responseConfiguracion.data.status==='vacio'){
+            this.mostrarHora=true;
+            this.mostrarFecha=true;
+        }
         this.actualizarHora();
         await this.$nextTick();
         await new Promise(resolve => setTimeout(resolve, 400)); // Espera para renderizado
@@ -113,6 +130,23 @@ export default{
       } catch (error) {
         console.error("Error PDF:", error);
       }
+    },
+    async getConfiguraciones(){
+      try {
+        const responseConfiguraciones= await api.get('/getConfiguracion')
+
+        if (responseConfiguraciones.data.status==='vacio') {
+          return configuracion
+        }else if(responseConfiguraciones.data.status==='ok'){
+          this.mostrarFecha=responseConfiguraciones.data.rows[0].mostrarFecha;
+          this.mostrarHora=responseConfiguraciones.data.rows[0].mostrarHora;
+          this.firmas=responseConfiguraciones.data.rows[0].firmas
+          console.log(this.firmas)
+        }  
+      } catch (error) {
+        console.log(error);
+
+      }
     }
     },
     watch: {
@@ -127,6 +161,12 @@ export default{
         deep: true // Importante para detectar cambios dentro del Array
       },
       datosExtra:{
+        handler(newval){
+          console.log(newval)
+        },
+        deep:true
+      },
+      firmas:{
         handler(newval){
           console.log(newval)
         },
@@ -147,9 +187,9 @@ export default{
           <h1 class="text-3xl font-black uppercase tracking-tighter text-slate-800">Comprobante de {{ titulo }}</h1>
           <p class="text-xs font-bold text-slate-400 tracking-widest uppercase">Documento Interno de Contabilidad</p>
         </div>
-        <div class="flex flex-col text-right border-l-4 border-slate-800 pl-4">
-          <p class="text-[10px] font-black text-slate-400">Fecha: <span class="text-black text-sm">{{ new Date().toLocaleDateString() }}</span></p>
-          <p class="text-[10px] font-black text-slate-400">Hora: <span class="text-black text-sm">{{ horaActual }}</span></p>
+        <div class="flex flex-col text-right border-l-4 border-slate-800 pl-4" >
+          <p v-show="mostrarFecha" class="text-[10px] font-black text-slate-400">Fecha: <span class="text-black text-sm">{{ new Date().toLocaleDateString() }}</span></p>
+          <p v-show="mostrarHora" class="text-[10px] font-black text-slate-400">Hora: <span class="text-black text-sm">{{ horaActual }}</span></p>
         </div>
       </div>
 
@@ -217,16 +257,19 @@ export default{
         </p>
       </div>
 
-      <div class="mt-32 flex justify-between px-20">
-        <div class="text-center">
-          <div class="border-t-2 border-slate-800 w-56 mb-1"></div>
-          <p class="text-[10px] font-black text-slate-500 uppercase">CONTADOR</p>
-        </div>
-        <div class="text-center">
-          <div class="border-t-2 border-slate-800 w-56 mb-1"></div>
-          <p class="text-[10px] font-black text-slate-500 uppercase">GERENTE GENERAL</p>
-        </div>
+      
+      <!-- 1. El contenedor PADRE tiene el flex -->
+      <div class="flex flex-row flex-wrap justify-center space-x-4 mx-auto mt-32">
+          
+          <!-- 2. El HIJO tiene el v-for -->
+          <div v-for="(item, index) in firmas" :key="index" class="text-center">
+              <div class="border-t-2 border-slate-800 w-40 mb-1"></div>
+              <p class="text-[10px] font-black text-slate-500 uppercase">{{ item }}</p>
+          </div>
+
       </div>
+        
+      
     </div>
   </div>
 </template>

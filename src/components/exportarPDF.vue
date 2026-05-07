@@ -36,10 +36,13 @@ export default {
 
         // 1. CONFIGURACIÓN DE DATOS PARA AUTOTABLE
         // Transformamos tus datos a filas que entiende el plugin
-        const filasTabla = this.datos.map(item => [
-          item.puct,
-          item.nombre,
-          parseFloat(item.monto).toLocaleString('en-US', { minimumFractionDigits: 2 })
+        // PASO 1: Filtrar los datos originales primero
+        const datosFiltrados = this.datos.filter(item => parseFloat(item.monto) !== 0);
+        // PASO 2: Mapear para la tabla usando la lista ya filtrada
+        const filasTabla = datosFiltrados.map(item => [
+        item.puct,
+        item.nombre,
+        parseFloat(item.monto).toLocaleString('en-US', { minimumFractionDigits: 2 })
         ]);
 
         // 2. DIBUJAR TABLA CON AUTO-PAGINACIÓN
@@ -59,15 +62,17 @@ export default {
           // Lógica de estilos por nivel (Negritas y Sangrías)
           didParseCell: (data) => {
             if (data.section === 'body') {
-              const item = this.datos[data.row.index];
+              const item = datosFiltrados[data.row.index];
               // Aplicar sangría al nombre de la cuenta (columna 1)
-              if (data.column.index === 1) {
-                data.cell.styles.cellPadding = { left: item.nivel * 4 };
-              }
-              // Poner en negrita niveles principales
-              if (item.nivel <= 3) {
-                data.cell.styles.fontStyle = 'bold';
-                if (item.nivel === 1) data.cell.styles.fillColor = [245, 245, 245];
+              if (item) {
+                if (data.column.index === 1) {
+                  data.cell.styles.cellPadding = { left: item.nivel * 4 };
+                }
+                // Poner en negrita niveles principales
+                if (item.nivel <= 3) {
+                  data.cell.styles.fontStyle = 'bold';
+                  if (item.nivel === 1) data.cell.styles.fillColor = [245, 245, 245];
+                }
               }
             }
           },
@@ -138,6 +143,11 @@ export default {
       
       doc.line(pageWidth - margin - 55, firmaY, pageWidth - margin, firmaY);
       doc.text("GERENTE GENERAL", pageWidth - margin - 27, firmaY + 5, { align: 'center' });
+    }
+  },
+  watch:{
+    empresa(newval){
+      
     }
   }
 };

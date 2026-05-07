@@ -125,7 +125,8 @@ export default{
             pago:[{value:1,text:'CHEQUE'},{value:2,text:'TRANSFERENCIA ENTRE ENTIDADES FINANCIERAS(ACH)'},{value:4,text:'QR'},{value:5,text:'BILLETERA MOVIL'},{value:6,text:'TARJETA DEBITO/CREDITO'},{value:7,text:'DEPOSITO EN CUENTA'},{value:8,text:'CARTAS DE CREDITO'},{value:9,text:'SIGEP'},{value:6,text:'CARTAS DE CREDITO'},{value:7,text:'EFECTIVO'}],
             skipFechaWatcher:false,
             skipTipoWatcher:false,
-            nombreEmpresa:''
+            nombreEmpresa:'',
+            
         }
     },
      mounted(){  
@@ -139,7 +140,9 @@ export default{
             const decryptEmpresa= CryptoJS.AES.decrypt(Cookies.get('emp'),this.key);
             const empresa= decryptEmpresa.toString(CryptoJS.enc.Utf8);
             const filasCompletas=this.obtenerFilasCompletas();
-            const [anio,mes,dia]= this.datosModificar.fecha_comprobante.split('-')
+            const separador=this.datosModificar.fecha_comprobante.includes('-') ? '-' : '/';
+            const [anio,mes,dia]= this.datosModificar.fecha_comprobante.split(separador) ;
+            
                 const datos={
                     cod_comprobante:this.datosModificar.cod_comprobante,
                     nro_comprobante:this.datosModificar.nro_comprobante,
@@ -148,8 +151,8 @@ export default{
                     razon_social:this.datosModificar.selectedEmpresa,
                     glosa:this.datosModificar.glosa,
                     metodo_pago:this.datosModificar.metodo_pago.toLocaleLowerCase(),
-                    total_debe:this.total_debe,
-                    total_haber:this.total_haber,
+                    total_debe:this.datosModificar.total_debe,
+                    total_haber:this.datosModificar.total_haber,
                     estado:'activo',
                     dolar:Number(this.datosModificar.dolar).toFixed(2),
                     ufv:Number(this.datosModificar.ufv).toFixed(2),
@@ -159,46 +162,48 @@ export default{
                         cod_asiento:fila.cod_asiento || null,
                         cod_nombreCuenta:fila.cod_nombreCuenta,
                         referencia:fila.referencia,
-                        debe:Number(fila.debe).toFixed(2),
+                        debe:Number(fila.debe).toFixed(2), 
                         haber:Number(fila.haber).toFixed(2)
                     }))
 
                 }
         console.log(datos)
-        /*try {
-            const responselibro= await api.post('/addComprobante',datos)
+        try {
+            const responselibro= await api.post('/updateLibro',datos)
         if (responselibro.data.status==='error') {
-            console.log(responselibro.data)
+            
             Swal.fire({
                 icon:'error',
                 title:'Abencoado Group',
-                text:' hubo un error al momento de registrar el libro diario'
+                text:' hubo un error al momento de modificar el libro diario'
             })
         }else if(responselibro.data.status==='ok'){
             Swal.fire({
                 icon:'success',
                 title:'Abencoado Group',
-                text:' datos registrados correctamente'
+                text:' libro diario modificado correctamente'
             }) 
-            this.nro_comprobante='';
+            //this.nro_comprobante='';
             //this.skipTipoWatcher = true;
-            this.tipo_comprobante='';
+            //this.tipo_comprobante='';
             //this.skipFechaWatcher = true;
-            this.fecha_comprobante='';
-            this.dolar='';
-            this.ufv='';
-            this.selectedEmpresa='';
-            this.glosa='';
-            this.metodo_pago='';
-            this.total_debe=0.00;
-            this.total_haber=0.00;
-            this.rowData=[
+            //this.fecha_comprobante='';
+            //this.dolar='';
+            //this.ufv='';
+            //this.selectedEmpresa='';
+            //this.glosa='';
+            //this.metodo_pago='';
+            //this.total_debe=0.00;
+            //this.total_haber=0.00;
+            /*this.rowData=[
                 {cod_nombreCuenta:0,cuenta:'',nombre_cuenta:'',referencia:'',debe:0.00,haber:0.00},
                 {cod_nombreCuenta:0,cuenta:'',nombre_cuenta:'',referencia:'',debe:0.00,haber:0.00},
                 {cod_nombreCuenta:0,cuenta:'',nombre_cuenta:'',referencia:'',debe:0.00,haber:0.00},
                 {cod_nombreCuenta:0,cuenta:'',nombre_cuenta:'',referencia:'',debe:0.00,haber:0.00},
                 {cod_nombreCuenta:0,cuenta:'',nombre_cuenta:'',referencia:'',debe:0.00,haber:0.00}
-            ]
+            ] */
+            
+
             this.$emit('registro-exitoso')
         }     
         } catch (error) {
@@ -208,7 +213,7 @@ export default{
                 title:'Abencoado Group',
                 text:'Hubo un error en el servidor intentelo mas tarde'
             })   
-        } */
+        } 
         
       
         },
@@ -376,6 +381,7 @@ export default{
                 {cod_nombreCuenta:0, cuenta:'', nombre_cuenta:'', referencia:'', debe:0.00, haber:0.00}
             ];
         },
+        
         async getComprobante(fecha,tipo_comprobante){
         try {
             const responseComprobante= await api.post('/getComprobante',{
@@ -391,7 +397,7 @@ export default{
                 console.log(comprobanteOne)
                 return comprobanteOne
 
-            }
+            }  
         } catch (error) {
             console.log(error);
             return 0;
@@ -475,7 +481,7 @@ export default{
             this.datosEdit.puct='';
             this.datosEdit.selectedCuenta='';
             this.datosEdit.selectedNivel='';
-        },
+    },
     mostrarRegistroCuenta(){
         if (this.itemSeleccionado.cod_nivelCuenta!==4) {
             Toast.fire({
@@ -727,7 +733,7 @@ export default{
             <div class=" grid grid-cols-2 mt-5 gap-x-2">
             <div class=" flex flex-col">
                 <label class=" block font-Nunito text-xs 2xl:text-sm text-slate-700">Comprobante Nro</label>
-                <input v-model="datosModificar.nro_comprobante"  type="text" class=" bg-white text-sm p-1.5 rounded-xl border border-gray-200  placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="ingrese nro comprobante">
+                <input v-model="datosModificar.nro_comprobante" disabled type="text" class=" bg-white text-sm p-1.5 rounded-xl border border-gray-200  placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="ingrese nro comprobante">
             </div>
             <div class=" flex flex-col">
                 <label class=" block font-Nunito text-xs 2xl:text-sm text-slate-700">Tipo de comprobante</label>
@@ -765,11 +771,11 @@ export default{
             </div>
             <div class=" flex flex-col">
                 <label class=" block font-Nunito text-xs 2xl:text-sm text-slate-700">T.C $us</label>
-                <input v-model="datosModificar.dolar" type="text" class=" bg-white w-28 text-sm p-2 rounded-xl border border-gray-200  placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="$us">            
+                <input v-model="datosModificar.dolar" type="text" disabled class=" bg-white w-28 text-sm p-2 rounded-xl border border-gray-200  placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="$us">            
             </div>
             <div class=" flex flex-col">
                 <label class=" block font-Nunito text-xs 2xltext-sm text-slate-700">T.C Ufv</label>
-                <input v-model="datosModificar.ufv" type="text" class=" bg-white w-28 text-sm p-2 rounded-xl border border-gray-200  placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="UFV">            
+                <input v-model="datosModificar.ufv" type="text" disabled class=" bg-white w-28 text-sm p-2 rounded-xl border border-gray-200  placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="UFV">            
             </div>
         </div>
         </div>
@@ -815,17 +821,17 @@ export default{
             <p class=" text-blue-800 font-Nunito text-sm" :class="diferencia> 0 ? 'border-red-500' :'border-green-500'">{{ diferencia.toFixed(2) }}</p>
         </div>    
             <div class=" flex flex-row space-x-4 mt-5">
-            <button type="submit" :disabled="diferencia>0" :class="diferencia>0 ? 'bg-gray-400 text-gray-600 cursor-not-allowed opacity-50' :'bg-blue-800 text-white hover:bg-blue-800'" class=" flex flex-row items-center justify-center w-xs bg-blue-950 rounded-lg p-2 font-Nunito text-white text-xs cursor-pointer"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 20 20"><path fill="#fff" d="M7.707 10.293a1 1 0 1 0-1.414 1.414l3 3a1 1 0 0 0 1.414 0l3-3a1 1 0 0 0-1.414-1.414L11 11.586V6h5a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5v5.586zM9 4a1 1 0 0 1 2 0v2H9z"/></svg>{{diferencia>0 ? 'Diferencia pendiente' : 'Registrar Comprobante'}}</button>
-            <button type="button" @click="imprimirReporte('preview')" class=" flex flex-row justify-center items-center w-xs bg-blue-950 rounded-lg p-2 font-Nunito cursor-pointer text-white text-xs">Imprimir Comprobante</button>
-            <button type="button" @click="cerrarViewEdit" class=" flex flex-row justify-center items-center w-xs bg-blue-950 rounded-lg p-2 font-Nunito cursor-pointer text-white text-xs"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="#fff" d="m8.4 17l3.6-3.6l3.6 3.6l1.4-1.4l-3.6-3.6L17 8.4L15.6 7L12 10.6L8.4 7L7 8.4l3.6 3.6L7 15.6zm3.6 5q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22"/></svg>Cancelar</button>
+            <button type="submit" :disabled="diferencia>0" :class="diferencia>0 ? 'bg-gray-400 text-gray-600 cursor-not-allowed opacity-50' :'bg-blue-800 text-white hover:bg-blue-800'" class=" flex flex-row items-center justify-center w-50 bg-blue-950 rounded-lg p-2 font-Nunito text-white text-xs cursor-pointer"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 20 20"><path fill="#fff" d="M7.707 10.293a1 1 0 1 0-1.414 1.414l3 3a1 1 0 0 0 1.414 0l3-3a1 1 0 0 0-1.414-1.414L11 11.586V6h5a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5v5.586zM9 4a1 1 0 0 1 2 0v2H9z"/></svg>Modificar comprobante</button>
+            <button type="button" @click="imprimirReporte('preview')" class=" flex flex-row justify-center items-center w-50 bg-blue-950 rounded-lg p-2 font-Nunito cursor-pointer text-white text-xs">Imprimir Comprobante</button>
+            <button type="button" @click="cerrarViewEdit" class=" flex flex-row justify-center items-center w-50 bg-blue-950 rounded-lg p-2 font-Nunito cursor-pointer text-white text-xs"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="#fff" d="m8.4 17l3.6-3.6l3.6 3.6l1.4-1.4l-3.6-3.6L17 8.4L15.6 7L12 10.6L8.4 7L7 8.4l3.6 3.6L7 15.6zm3.6 5q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22"/></svg>Cancelar</button>
             
             </div>
         </div>
     
     </form>
     </div>
-               
     </transition>
+    
 <!-- modal para consultar cuenta-->
     <transition enter-active-class="transition duration-300 ease-out"
                 enter-from-class="opacity-0 scale-95"
@@ -857,6 +863,7 @@ export default{
     :datosExtra="datosModificar"
     :convertirMontoALetras="convertirMontoALetras"
     :nombreEmpresa="nombreEmpresa"
+    
 />
 </template>
 

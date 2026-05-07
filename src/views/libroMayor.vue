@@ -162,7 +162,10 @@ export default{
             total_Saldo:0.00,
             fechadata1:[],
             fechadata2:[],
-            nombreEmpresa:''
+            nombreEmpresa:'',
+            agregaFirmas:[],
+            modalFirmas:false,
+            firmas:''
 
 
         }
@@ -171,12 +174,15 @@ export default{
         const sF1 = sessionStorage.getItem('fecha1');
         const sF2 = sessionStorage.getItem('fecha2');
         const cCuenta = Cookies.get('cuenta');
+        const nombre_cuenta= sessionStorage.getItem('nombre_cuenta');
 
         if (sF1 && sF2 && cCuenta) {
             this.fecha1 = sF1;
             this.fecha2 = sF2;
             const bytes = CryptoJS.AES.decrypt(cCuenta, this.key);
             this.cod_nombreCuenta = bytes.toString(CryptoJS.enc.Utf8);
+            this.nombre_cuenta=nombre_cuenta;
+
 
             this.getlibroMayorFechas();
         } 
@@ -189,6 +195,8 @@ export default{
 
             const cuentaDecrypt= Cookies.get('cuenta') ? CryptoJS.AES.decrypt(Cookies.get('cuenta'),this.key).toString(CryptoJS.enc.Utf8) : null;
             const finalCuenta = this.cod_nombreCuenta || cuentaDecrypt;
+
+            const nombreCuenta= this.nombre_cuenta || sessionStorage.getItem('nombre_cuenta');
 
             const f1 = this.fecha1 || sessionStorage.getItem('fecha1');
             const f2 = this.fecha2 || sessionStorage.getItem('fecha2');    
@@ -226,10 +234,13 @@ export default{
                         // guardar localstorage las fechas
                         sessionStorage.setItem('fecha1',f1);
                         sessionStorage.setItem('fecha2',f2);
+                        sessionStorage.setItem('nombre_cuenta',nombreCuenta);
                         // Aseguramos que las variables locales de Vue tengan el valor
                         this.fecha1 = f1;
                         this.fecha2 = f2;
                         this.cod_nombreCuenta = finalCuenta;
+                        this.nombre_cuenta=nombreCuenta
+                    
 
                         // encrypt cuenta
                         const encryptcuenta=CryptoJS.AES.encrypt(String(finalCuenta),this.key).toString();
@@ -770,6 +781,18 @@ export default{
             
         }
         },
+        agregarFirmas(){
+            if(this.firmas.trim()==='') return;
+            this.agregaFirmas.push(this.firmas);
+            this.firmas='';
+        },
+        quitarFirmas(){
+            this.agregaFirmas.pop();
+        },
+        cerrarModalFirmas(){
+            this.agregaFirmas=[];
+            this.modalFirmas=false;
+        },
         imprimirReporte(accion) {
             // Llamamos al método generarPDF del componente hijo
             this.$refs.pdfHijo.generarPDF(accion);
@@ -832,27 +855,24 @@ export default{
     <div class="flex flex-row space-x-5">
         <p class=" text-slate-900 text-sm font-Nunito">Del {{ fechadata1[2] }} de {{fechadata1[1]}} de {{ fechadata1[0] }} al {{fechadata2[2]}} de {{fechadata2[1]}} de {{fechadata2[0]}}</p>
     </div>
-    <div class=" bg-gray-100 w-6xl  2xl:w-7xl 2xl:h-10/12 mb-5 rounded-lg p-8 ">
+    <div class=" bg-gray-100 w-6xl h-fit  2xl:w-7xl  2xl:h-fit mb-5 rounded-lg p-8 ">
         <div class=" flex flex-row items-center space-x-4">
             <p class=" text-slate-900 text-sm font-Nunito">Buscar por NRO. comprobante</p>
             <input  type="text" class=" bg-white text-sm p-2 rounded-xl border border-gray-200  placeholder:text-xs focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="nro comprobante">
             <button class=" bg-blue-950 p-1.5 rounded-lg text-white flex flex-row items-center cursor-pointer text-sm font-Nunito"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><rect width="24" height="24" fill="none"/><g fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path stroke-dasharray="62" d="M13.5 3l5.5 5.5v11.5c0 0.55 -0.45 1 -1 1h-12c-0.55 0 -1 -0.45 -1 -1v-16c0 -0.55 0.45 -1 1 -1Z"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.6s" values="62;0"/></path><path stroke-dasharray="34" stroke-dashoffset="34" d="M14.83 15.83c-1.56 1.56 -4.1 1.56 -5.66 0c-1.56 -1.56 -1.56 -4.1 0 -5.66c1.56 -1.56 4.1 -1.56 5.66 0c1.56 1.56 1.56 4.1 0 5.66l4.67 4.67"><animate fill="freeze" attributeName="stroke-dashoffset" begin="0.6s" dur="0.4s" to="0"/></path></g></svg>Buscar</button>
-            <button class=" bg-blue-950 p-1.5 w-48 text-white text-sm font-Nunito rounded-lg cursor-pointer">Seleccionar cuenta</button>
+            
             
         </div>
         
         <div class=" grid grid-cols-2 w-4xl gap-x-4 mt-8">
-            <div class="flex flex-col">
-                <label class=" text-sm font-Nunito text-slate-900" >Cuenta</label>
-                <input  type="text" class=" bg-white text-sm p-2 rounded-xl border border-gray-200  placeholder:text-xs focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder=" nro cuenta">    
-            </div>
+            
             <div class="flex flex-col">
                 <label class=" text-sm font-Nunito text-slate-900" >Nombre de Cuenta</label>
-                <input  type="text" class=" bg-white text-sm p-2 rounded-xl border border-gray-200  placeholder:text-xs focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="nombre cuenta">    
+                <input :value="nombre_cuenta"  type="text" class=" bg-white text-sm p-2 rounded-xl border border-gray-200  placeholder:text-xs focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="nombre cuenta">    
             </div>
         </div>
         <!-- tabla lista libro mayor-->
-        <div class="flex flex-col bg-gray-100 border border-gray-200 w-5xl mt-5  p-4 rounded-lg">
+        <div class="flex flex-col bg-gray-100 border border-gray-200 w-5xl 2xl:w-6xl mt-5  p-4 rounded-lg">
             <div class="flex flex-row px-4">
                 <button  class=" p-1.5 text-sm text-white bg-blue-950 rounded-lg font-Nunito cursor-pointer">Mayor</button>
                 <button @click="mostrarSaldo" class=" p-1.5 text-sm text-white bg-blue-950 rounded-lg font-Nunito cursor-pointer">Saldos Continuos</button>
@@ -1135,6 +1155,7 @@ export default{
         <div class="flex flex-row space-x-4 mt-8">
             <button v-show="false" class="bg-blue-950 p-1.5 w-50 text-white font-Nunito cursor-pointer rounded-lg text-sm flex flex-row space-x-4 justify-center items-center"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="#568cf1" fill-rule="evenodd" clip-rule="evenodd"><path d="M11.32 6.176H5c-1.105 0-2 .949-2 2.118v10.588C3 20.052 3.895 21 5 21h11c1.105 0 2-.948 2-2.118v-7.75l-3.914 4.144A2.46 2.46 0 0 1 12.81 16l-2.681.568c-1.75.37-3.292-1.263-2.942-3.115l.536-2.839c.097-.512.335-.983.684-1.352z"/><path d="M19.846 4.318a2.2 2.2 0 0 0-.437-.692a2 2 0 0 0-.654-.463a1.92 1.92 0 0 0-1.544 0a2 2 0 0 0-.654.463l-.546.578l2.852 3.02l.546-.579a2.1 2.1 0 0 0 .437-.692a2.24 2.24 0 0 0 0-1.635M17.45 8.721L14.597 5.7L9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.5.5 0 0 0 .255-.145l4.778-5.06Z"/></g></svg>Modificar</button>
             <button @click="imprimirReporte('preview')" class="bg-blue-950 p-1.5 w-55 text-white font-Nunito cursor-pointer rounded-lg text-sm flex flex-row space-x-4 justify-center items-center"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"><g fill="none"><path d="m12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035q-.016-.005-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.017-.018m.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093q.019.005.029-.008l.004-.014l-.034-.614q-.005-.018-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01z"/><path fill="#568cf1" d="M16 16a1 1 0 0 1 .993.883L17 17v4a1 1 0 0 1-.883.993L16 22H8a1 1 0 0 1-.993-.883L7 21v-4a1 1 0 0 1 .883-.993L8 16zm3-9a3 3 0 0 1 3 3v7a2 2 0 0 1-2 2h-1v-3a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v3H4a2 2 0 0 1-2-2v-7a3 3 0 0 1 3-3zm-2 2h-2a1 1 0 0 0-.117 1.993L15 11h2a1 1 0 0 0 .117-1.993zm0-7a1 1 0 0 1 1 1v2H6V3a1 1 0 0 1 1-1z"/></g></svg>Imprimir Comprobante</button>
+            
             <button v-if="false" class="bg-blue-950 p-1.5 w-55 text-white font-Nunito cursor-pointer rounded-lg text-sm flex flex-row space-x-4 justify-center items-center"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"><g fill="none"><path d="m12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035q-.016-.005-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.017-.018m.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093q.019.005.029-.008l.004-.014l-.034-.614q-.005-.018-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01z"/><path fill="#568cf1" d="M16 16a1 1 0 0 1 .993.883L17 17v4a1 1 0 0 1-.883.993L16 22H8a1 1 0 0 1-.993-.883L7 21v-4a1 1 0 0 1 .883-.993L8 16zm3-9a3 3 0 0 1 3 3v7a2 2 0 0 1-2 2h-1v-3a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v3H4a2 2 0 0 1-2-2v-7a3 3 0 0 1 3-3zm-2 2h-2a1 1 0 0 0-.117 1.993L15 11h2a1 1 0 0 0 .117-1.993zm0-7a1 1 0 0 1 1 1v2H6V3a1 1 0 0 1 1-1z"/></g></svg>Imprimir Libro Diario</button>
             <button @click="cerrarModalEdit" class="bg-blue-950 p-1.5 w-50 text-white font-Nunito cursor-pointer rounded-lg text-sm flex flex-row space-x-4 justify-center items-center"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"><path fill="#568cf1" d="m12 13.4l2.9 2.9q.275.275.7.275t.7-.275t.275-.7t-.275-.7L13.4 12l2.9-2.9q.275-.275.275-.7t-.275-.7t-.7-.275t-.7.275L12 10.6L9.1 7.7q-.275-.275-.7-.275t-.7.275t-.275.7t.275.7l2.9 2.9l-2.9 2.9q-.275.275-.275.7t.275.7t.7.275t.7-.275zm0 8.6q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22"/></svg>Cancelar</button>
         </div>
@@ -1148,6 +1169,44 @@ export default{
     </div>
                
 </transition>
+
+<!-- modal para editar firmas-->
+    <transition  enter-active-class="transition duration-300 ease-out"
+                enter-from-class="opacity-0 scale-95"
+                enter-to-class="opacity-100 scale-100"
+                leave-active-class="transition duration-200 ease-in"
+                leave-from-class="opacity-100 scale-100"
+                leave-to-class="opacity-0 scale-95">
+        <div v-if="modalFirmas" class="fixed inset-0 flex items-center justify-around z-50">
+            <div class="bg-gray-50 bg-opacity-80   ml-56 w-md p-6 rounded-lg shadow-2xl flex flex-col space-x-2">
+                <div class="flex flex-col space-y-4">
+                    <p class="font-Nunito text-sm text-slate-900 ">Editar Comprobante</p>
+                        
+                        <div class="flex flex-row mt-5 space-x-2">
+                            <label class="font-Nunito text-xs text-slate-800">Agregar firmas (Hasta 2 firmas)</label>
+                            <input v-model="firmas"  type="text"  class=" bg-white text-sm rounded-xl border border-gray-300 p-1.5 placeholder:text-sm placeholder:text-slate-400 focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 text-slate-900  " placeholder="agregar">
+                            <button @click="agregarFirmas" class=" p-2 bg-emerald-900 text-white text-sm w-40 rounded-lg cursor-pointer"> Agregar</button>
+                        </div>
+                        <div class="flex flex-row space-x-4 items-center">
+                            <span class="font-Nunito text-sm text-slate-900 flex flex-row items-center space-x-4 ">Firmas:
+                            <ul class="flex flex-row  items-center space-x-4" >
+                                <li v-for="(firma, index) in agregaFirmas" :key="index" class=" text-gray-800 text-sm  mr-2 ml-2">
+                                    {{ firma }}
+                                </li>
+                                <li v-show="agregaFirmas.length>0" @click="quitarFirmas" class=" bg-red-800 rounded-full text-xs p-2 cursor-pointer text-white flex flex-row justify-center items-center"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><rect width="24" height="24" fill="none"/><path fill="#fff" d="M20 6a1 1 0 0 1 .117 1.993L20 8h-.081L19 19a3 3 0 0 1-2.824 2.995L16 22H8c-1.598 0-2.904-1.249-2.992-2.75l-.005-.167L4.08 8H4a1 1 0 0 1-.117-1.993L4 6zm-9.489 5.14a1 1 0 0 0-1.218 1.567L10.585 14l-1.292 1.293l-.083.094a1 1 0 0 0 1.497 1.32L12 15.415l1.293 1.292l.094.083a1 1 0 0 0 1.32-1.497L13.415 14l1.292-1.293l.083-.094a1 1 0 0 0-1.497-1.32L12 12.585l-1.293-1.292l-.094-.083zM14 2a2 2 0 0 1 2 2a1 1 0 0 1-1.993.117L14 4h-4l-.007.117A1 1 0 0 1 8 4a2 2 0 0 1 1.85-1.995L10 2z" stroke-width="0.5" stroke="#fff"/></svg></li>
+                            </ul>
+                        </span>    
+                        </div>
+                        <div class="flex flex-row space-x-10 mt-4">
+                            <button type="button" @click="imprimirReporte('preview')" class=" flex flex-row justify-center items-center w-xs bg-blue-950 rounded-lg p-2 font-Nunito cursor-pointer text-white text-xs">Imprimir Comprobante</button>
+                            <button @click="cerrarModalFirmas" class=" text-sm bg-red-900 text-white font-Nunito w-40 rounded-lg cursor-pointer">Cancelar</button>
+                        </div>
+                        
+                </div>
+            </div>
+        </div>
+    </transition>
+
 
 <!-- modal de cuenta de nivel 5-->
 <transition enter-active-class="transition duration-300 ease-out"
@@ -1181,6 +1240,7 @@ export default{
     :datosExtra="datosEdit"
     :convertirMontoALetras="convertirMontoALetras"
     :nombreEmpresa="nombreEmpresa"
+    :firmas="agregaFirmas"
 />
 
 <!-- seccion saldos continuos-->
@@ -1188,23 +1248,20 @@ export default{
     <div class="flex flex-row space-x-5">
         <p class=" text-slate-900 text-sm font-Nunito">Del {{ fechadata1[2] }} de {{fechadata1[1]}} de {{ fechadata1[0] }} al {{fechadata2[2]}} de {{fechadata2[1]}} de {{fechadata2[0]}}</p>
     </div>
-    <div class=" bg-gray-100 w-7xl  2xl:w-7xl 2xl:h-10/12 mb-5 rounded-lg p-8 ">
+    <div class=" bg-gray-100 w-7xl h-fit 2xl:w-7xl 2xl:h-fit mb-5 rounded-lg p-8 ">
         <div class=" flex flex-row items-center space-x-4">
             <p class=" text-slate-900 text-sm font-Nunito">Buscar por NRO. comprobante</p>
             <input  type="text" class=" bg-white text-sm p-2 rounded-xl border border-gray-200  placeholder:text-xs focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="nro comprobante">
             <button class=" bg-blue-950 p-1.5 rounded-lg text-white flex flex-row items-center cursor-pointer text-sm font-Nunito"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><rect width="24" height="24" fill="none"/><g fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path stroke-dasharray="62" d="M13.5 3l5.5 5.5v11.5c0 0.55 -0.45 1 -1 1h-12c-0.55 0 -1 -0.45 -1 -1v-16c0 -0.55 0.45 -1 1 -1Z"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.6s" values="62;0"/></path><path stroke-dasharray="34" stroke-dashoffset="34" d="M14.83 15.83c-1.56 1.56 -4.1 1.56 -5.66 0c-1.56 -1.56 -1.56 -4.1 0 -5.66c1.56 -1.56 4.1 -1.56 5.66 0c1.56 1.56 1.56 4.1 0 5.66l4.67 4.67"><animate fill="freeze" attributeName="stroke-dashoffset" begin="0.6s" dur="0.4s" to="0"/></path></g></svg>Buscar</button>
-            <button class=" bg-blue-950 p-1.5 w-48 text-white text-sm font-Nunito rounded-lg cursor-pointer">Seleccionar cuenta</button>
+            
             
         </div>
         
         <div class=" grid grid-cols-2 w-4xl gap-x-4 mt-8">
-            <div class="flex flex-col">
-                <label class=" text-sm font-Nunito text-slate-900" >Cuenta</label>
-                <input  type="text" class=" bg-white text-sm p-2 rounded-xl border border-gray-200  placeholder:text-xs focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder=" nro cuenta">    
-            </div>
+            
             <div class="flex flex-col">
                 <label class=" text-sm font-Nunito text-slate-900" >Nombre de Cuenta</label>
-                <input  type="text" class=" bg-white text-sm p-2 rounded-xl border border-gray-200  placeholder:text-xs focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="nombre cuenta">    
+                <input :value="nombre_cuenta"  type="text" class=" bg-white text-sm p-2 rounded-xl border border-gray-200  placeholder:text-xs focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="nombre cuenta">    
             </div>
         </div>
         <!-- tabla lista libro mayor-->
@@ -1290,23 +1347,20 @@ export default{
     <div class="flex flex-row space-x-5">
         <p class=" text-slate-900 text-sm font-Nunito">Del {{ fechadata1[2] }} de {{fechadata1[1]}} de {{ fechadata1[0] }} al {{fechadata2[2]}} de {{fechadata2[1]}} de {{fechadata2[0]}}</p>
     </div>
-    <div class=" bg-gray-100 w-6xl  2xl:w-7xl 2xl:h-10/12 mb-5 rounded-lg p-8 ">
+    <div class=" bg-gray-100 w-6xl h-fit 2xl:w-7xl 2xl:h-fit mb-5 rounded-lg p-8 ">
         <div class=" flex flex-row items-center space-x-4">
             <p class=" text-slate-900 text-sm font-Nunito">Buscar por NRO. comprobante</p>
             <input  type="text" class=" bg-white text-sm p-2 rounded-xl border border-gray-200  placeholder:text-xs focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="nro comprobante">
             <button class=" bg-blue-950 p-1.5 rounded-lg text-white flex flex-row items-center cursor-pointer text-sm font-Nunito"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><rect width="24" height="24" fill="none"/><g fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path stroke-dasharray="62" d="M13.5 3l5.5 5.5v11.5c0 0.55 -0.45 1 -1 1h-12c-0.55 0 -1 -0.45 -1 -1v-16c0 -0.55 0.45 -1 1 -1Z"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.6s" values="62;0"/></path><path stroke-dasharray="34" stroke-dashoffset="34" d="M14.83 15.83c-1.56 1.56 -4.1 1.56 -5.66 0c-1.56 -1.56 -1.56 -4.1 0 -5.66c1.56 -1.56 4.1 -1.56 5.66 0c1.56 1.56 1.56 4.1 0 5.66l4.67 4.67"><animate fill="freeze" attributeName="stroke-dashoffset" begin="0.6s" dur="0.4s" to="0"/></path></g></svg>Buscar</button>
-            <button class=" bg-blue-950 p-1.5 w-48 text-white text-sm font-Nunito rounded-lg cursor-pointer">Seleccionar cuenta</button>
+            
             
         </div>
         
         <div class=" grid grid-cols-2 w-4xl gap-x-4 mt-8">
-            <div class="flex flex-col">
-                <label class=" text-sm font-Nunito text-slate-900" >Cuenta</label>
-                <input  type="text" class=" bg-white text-sm p-2 rounded-xl border border-gray-200  placeholder:text-xs focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder=" nro cuenta">    
-            </div>
+            
             <div class="flex flex-col">
                 <label class=" text-sm font-Nunito text-slate-900" >Nombre de Cuenta</label>
-                <input  type="text" class=" bg-white text-sm p-2 rounded-xl border border-gray-200  placeholder:text-xs focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="nombre cuenta">    
+                <input  type="text" :value="nombre_cuenta" class=" bg-white text-sm p-2 rounded-xl border border-gray-200  placeholder:text-xs focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="nombre cuenta">    
             </div>
         </div>
         <!-- tabla lista libro mayor-->

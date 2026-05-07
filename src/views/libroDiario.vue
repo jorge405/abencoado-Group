@@ -100,7 +100,10 @@ export default{
             this.verModal=false;
             this.getallLibro();
         },
-            
+        actualizarLista(){
+            this.verEditar=false;
+            this.getallLibro();
+        },    
     async consultarlibrofechas(){
         const decryptEmpresa= CryptoJS.AES.decrypt(Cookies.get('emp'),this.key).toString(CryptoJS.enc.Utf8); 
         const comprobante= this.tipoComprobante_consulta.toLocaleUpperCase();
@@ -232,15 +235,15 @@ export default{
 <template #title>Libro Diario</template>
     <!-- tabla libro diario-->
     <div v-if="mostrartabla" class=" flex flex-col ml-45 mt-5 space-y-5">
-        <div class="flex flex-col  bg-gray-100 w-6xl 2xl:w-7xl  p-4 rounded-lg">
+        <div class="flex flex-col  bg-gray-100 w-6xl  2xl:w-7xl  p-4 rounded-lg">
             <p class=" font-Nunito text-lg text-slate-900">Lista Libro Diario</p>
             <div class=" flex flex-row mt-5 items-center space-x-4">
             <label class=" font-Nunito text-sm">Buscar</label>
             <input  type="text" class=" text-sm p-2 bg-white rounded-xl border border-gray-300 w-xs placeholder:text-xs focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="buscar comprobante">
             </div>
-            <div class=" flex-1 mt-7 min-h-96 overflow-y-auto">
+            <div class=" flex-1 mt-7 max-h-96 overflow-y-auto">
             
-            <table class="w-full h-96 text-sm text-left text-gray-500">
+            <table class="w-full   text-sm text-left text-gray-500">
                 <!-- Encabezado Dinámico -->
                 <thead class="text-xs font-Nunito text-gray-700 uppercase bg-gray-50 sticky top-0">
                 <tr>
@@ -325,7 +328,7 @@ export default{
                 leave-active-class="transition duration-200 ease-in"
                 leave-from-class="opacity-100 scale-100"
                 leave-to-class="opacity-0 scale-95">
-    <modificarLibroDiario :mostrarRegistroEditar="verEditar" :comprobanteSeleccionado="comprobanteSeleccionado" titulo="Modificar libro diario" @cerrar="verEditar=false">
+    <modificarLibroDiario :mostrarRegistroEditar="verEditar" :comprobanteSeleccionado="comprobanteSeleccionado" titulo="Modificar libro diario" @cerrar="verEditar=false" @registro-exitoso="actualizarLista">
 
     </modificarLibroDiario>
                

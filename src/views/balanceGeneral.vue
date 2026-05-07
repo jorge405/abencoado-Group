@@ -40,34 +40,42 @@ export default{
             minuteIncrement: 1,
             wrap: false,
             }, 
+            nombreEmpresa:'',
             fecha1:'',
             fecha2:'',
             fechadata1:[],
-            fechadata2:[]
+            fechadata2:[],
+            selectedNivel:'',
+            nivelCuenta:[1,2,3,4,5]
 
         }
     },
     mounted(){
         
-        const sF2 = sessionStorage.getItem('fecha2');
-        if ( sF2 ) {
+        const sF2 = sessionStorage.getItem('date2');
+        const nivel= sessionStorage.getItem('nivel');
+        if ( sF2 && nivel ) {
             
             this.fecha2 = sF2;
+            this.selectedNivel=nivel;
             
             this.BalanceGeneral();
         } 
     },
     methods:{
         async BalanceGeneral(){
-            const decryptEmpresa=CryptoJS.AES.decrypt(Cookies.get('emp'),this.key).toString(CryptoJS.enc.Utf8); 
-
             
-            const f2 = this.fecha2 || sessionStorage.getItem('fecha2');  
+            const nombreEmpresa= CryptoJS.AES.decrypt(Cookies.get('dataEmp'),this.key).toString(CryptoJS.enc.Utf8); 
+            this.nombreEmpresa=nombreEmpresa.toUpperCase();
+            const decryptEmpresa=CryptoJS.AES.decrypt(Cookies.get('emp'),this.key).toString(CryptoJS.enc.Utf8);             
 
+            const f2 = this.fecha2 || sessionStorage.getItem('date2');  
+            const nivel= this.selectedNivel || sessionStorage.getItem('nivel');
             try {
                 const responseBalanceGeneral= await api.post('/obtenerBalanceGeneral',{
                     cod_empresa:parseInt(decryptEmpresa),
-                    fecha_final:f2
+                    fecha_final:f2,
+                    nivel_maximo:nivel
                 })
                 
                 if (responseBalanceGeneral.data.status==='vacio') {
@@ -86,9 +94,11 @@ export default{
                     this.mostrarConsultarFecha=false;
 
                     
-                    sessionStorage.setItem('fecha2',f2);
+                    sessionStorage.setItem('date2',f2);
+                    sessionStorage.setItem('nivel',nivel);
                     // Aseguramos que las variables locales de Vue tengan el valor
                         this.fecha2 = f2;
+                        this.selectedNivel=nivel
                     // calculo de fechas mostradas 
                         
                         const resultado2=this.fecha2.split('-').reverse().join('-').replace(/-(\d{2})-/, (match, m) => `-${new Date(0, m - 1).toLocaleString('es', { month: 'long' })}-`).split('-').reverse().join('-');
@@ -229,8 +239,8 @@ export default{
             <button  class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 font-bold text-xs uppercase cursor-pointer">
                 Actualizar Reporte
             </button>
-            <generarExcel :datos="listaBalanceGeneral" :totales="totales" :fecha2="fechadata2" titulo="BALANCE GENERAL" empresa="ABENCOADO GROUP"/>
-            <exportarPDF :datos="listaBalanceGeneral" :totales="totales" :periodo="fechadata2"  :titulo="'BALANCE GENERAL'"/>
+            <generarExcel :datos="listaBalanceGeneral" :totales="totales" :fecha2="fechadata2" titulo="BALANCE GENERAL" :empresa="nombreEmpresa"/>
+            <exportarPDF :datos="listaBalanceGeneral" :totales="totales" :periodo="fechadata2" :empresa="nombreEmpresa" :titulo="'BALANCE GENERAL'"/>
         </div>
       </div>
     </div>
@@ -242,17 +252,14 @@ export default{
                     leave-from-class="opacity-100 scale-100"
                     leave-to-class="opacity-0 scale-95">
         <div v-if="mostrarConsultarFecha" class="fixed inset-0 flex items-center justify-around z-50">
-        <div class="bg-gray-50 bg-opacity-80 text-white  ml-56 w-xl p-6 rounded-lg shadow-2xl flex flex-col space-x-2">
+        <div class="bg-gray-50 bg-opacity-80 text-white  ml-56 w-md p-6 rounded-lg shadow-2xl flex flex-col space-x-2">
             <p class=" text-slate-900 font-Nunito text-md font-bold mb-5 mx-auto">CONSULTAR BALANCE GENERAL</p>
             <div class="flex flex-col">
                 <div class="flex flex-col">
                     <form  @submit.prevent="BalanceGeneral">
                     
                     <div class=" flex flex-row space-x-4 mb-5">
-                        <div class=" flex flex-row items-center space-x-2">
-                        <label for="" class=" font-Nunito text-sm font-semibold text-slate-900 ">De:</label>
-                            <input  type="text" class=" w-40 bg-white 2xl:w-md text-sm p-2 rounded-xl border border-gray-200  placeholder:text-xs focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10" placeholder="fecha actual" disabled>
-                        </div>
+                        
                         <div class=" flex flex-row items-center">
                         <label for="" class=" font-Nunito text-sm text-slate-900 font-semibold ">Hasta:</label>
                             <div class="flex flex-row relative ml-2">
@@ -280,10 +287,16 @@ export default{
                         </div>
                         
                     </div>
-                    
+                    <div class="flex flex-col space-y-2 mb-5 ">
+                        <label class=" text-Nunito text-slate-950 text-sm" >Nivel de Cuenta</label>
+                        <select  v-model="selectedNivel" class=" text-slate-950 p-2 border w-3xs border-gray-200 rounded-xl placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10  ">
+                            <option value="" selected disabled class=" font-Nunito text-xs placeholder:text-sm text-slate-950 ">Seleccione nivel de Cuenta</option>
+                            <option v-for="(item,index) in nivelCuenta" :key="index" :value="item">{{ item }}</option>
+                        </select>
+                    </div>
                     <div class=" flex flex-row space-x-4 justify-center">
                         <button type="submit"  class=" bg-blue-950 w-50  text-sm rounded-lg p-2 cursor-pointer">Aceptar</button>
-                        <button type="button" @click="cerrarModalfecha" class=" bg-red-800 w-50 text-sm rounded-lg p-2 cursor-pointer">Cancelar</button>
+                        <button type="button" @click="mostrarConsultarFecha=false" class=" bg-red-800 w-50 text-sm rounded-lg p-2 cursor-pointer">Cancelar</button>
                         
                     </div>
                     </form>

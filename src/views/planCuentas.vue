@@ -69,7 +69,10 @@ data() {
                 cod_tpcuenta:null,
                 cod_nivelCuenta:null
             },
-            mostrarModalPuct:false 
+            mostrarModalPuct:false,
+            archivoSeleccionado:null,
+            cargando:false,
+
     }
   },
 mounted(){
@@ -299,7 +302,7 @@ methods: {
         const decryptEmpresa= CryptoJS.AES.decrypt(Cookies.get('emp'),this.key);
         const empresa= decryptEmpresa.toString(CryptoJS.enc.Utf8);
         try {
-            const responsenombreCuenta= await api.get(`/getnombreCuenta/${parseInt(empresa)}`)
+            const responsenombreCuenta= await api.get(`/getnombreCuenta/${parseInt(empresa || 0)}`)
             if (responsenombreCuenta.data.estado==='vacio') {
                 Swal.fire({
                     icon:'warning',
@@ -470,7 +473,56 @@ methods: {
     },
     mostrarEjemploPuct(){
         this.mostrarModalPuct=true;
-    }
+    },
+    manejarSeleccionArchivo(event) {
+      const file = event.target.files[0];
+      if (file) {
+        this.archivoSeleccionado = file;
+      }
+    },
+    async procesarYSubir() {
+      if (!this.archivoSeleccionado) return;
+
+      this.cargando = true;
+      const cod_empresa=CryptoJS.AES.decrypt(Cookies.get('emp'),this.key).toString(CryptoJS.enc.Utf8); 
+      
+      // FormData para enviar el archivo crudo
+      const formData = new FormData();
+      formData.append('archivo_plan', this.archivoSeleccionado);
+      formData.append('cod_empresa',parseInt(cod_empresa));
+      try {
+        // --- AQUÍ LLAMAS A TU BACKEND ---
+         const responsePuct = await api.post('/subirExcel',formData,{
+            headers:{
+                'Content-Type':'multipart/form-data'
+            }
+         }) 
+        
+        if (responsePuct.data.status==='vacio') {
+            Toast.fire({
+                icon:'warning',
+                text:'No se pudo cargar el archivo excel'
+            })    
+        }else if(responsePuct.data.status==='ok'){
+            Toast.fire({
+                icon:'success',
+                text:'archivo subido correctamente'
+            });
+            this.mostrarModalPuct=false;
+            this.getnombreCuenta();
+        }
+
+      } catch (error) {
+        console.error("Error al subir:", error);
+        Toast.fire({
+            icon:'error',
+            text:'error en el servidor intentelo mas tarde'
+        })
+        this.cargando = false;
+      } finally{
+        this.cargando=false;
+      }
+    },
   },
 computed:{ 
     
@@ -713,9 +765,19 @@ watch:{
                         <li>En el encabezado cod_tpcuenta hace referencia al tipo de cuenta que son: 1 ACTIVO , 2 PASIVO, 3 PATRIMONIO, 4 INGRESOS 5 EGRESOS</li>
                         <li>En el encabezado cod_nivelCuenta hace referencia al nivel de cuenta 1 al 5 </li>
                     </ul>
+                    <div v-if="archivoSeleccionado" class="mt-4 p-3 bg-green-100 border border-green-200 rounded-md flex items-center justify-between">
+                    <span class="text-green-800 text-xs font-bold truncate">📄 {{ archivoSeleccionado.name }}</span>
+                    <button @click="archivoSeleccionado = null" class="text-green-600 hover:text-red-500">✕</button>
+            </div>
                 </div>
+                <input type="file" ref="fileInput" @change="manejarSeleccionArchivo" accept=".xlsx, .xls, .csv" class=" hidden">
                 <div class=" flex flex-row space-x-2 my-4">
-                    <button class=" p-2 bg-green-700 text-sm font-Nunito text-white rounded-lg cursor-pointer ">Subir excel</button>
+                    <button  @click="archivoSeleccionado ? procesarYSubir() : $refs.fileInput.click()" :disabled="cargando"
+                    class="flex-1 p-2 bg-green-700 text-sm text-white rounded-lg cursor-pointer hover:bg-green-800 disabled:opacity-50 font-bold transition">
+                        <span v-if="cargando">Subiendo archivo...</span>
+                        <span v-else-if="archivoSeleccionado">Confirmar Importación</span>
+                        <span v-else>Seleccionar Excel / CSV</span>
+                    </button>
                     <button @click="mostrarModalPuct=false" class=" p-2 bg-red-600 text-sm font-Nunito text-white rounded-lg cursor-pointer">Cancelar</button>
                 </div>
             </div>

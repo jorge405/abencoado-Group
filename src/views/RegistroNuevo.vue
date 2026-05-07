@@ -325,9 +325,9 @@ export default{
                             class=" w-2xs  appearance-none rounded-xl border border-gray-300 bg-transparent bg-none p-2.5   text-sm text-slate-800 shadow-theme-xs placeholder:text-gray-700 focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10"
                             placeholder="ingrese fecha"/>
                             <span
-                            class="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
+                            class="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-10 top-1/2 dark:text-gray-400">
                             <svg
-                            class="fill-current"
+                            class="fill-current" 
                             width="20"
                             height="20"
                             viewBox="0 0 20 20"

@@ -116,7 +116,7 @@ export default{
                 {value:2,text:'egreso'},
                 {value:3,text:'traspaso'}
             ],
-            pago:[{value:1,text:'CHEQUE'},{value:2,text:'TRANSFERENCIA ENTRE ENTIDADES FINANCIERAS(ACH)'},{value:4,text:'QR'},{value:5,text:'BILLETERA MOVIL'},{value:6,text:'TARJETA DEBITO/CREDITO'},{value:7,text:'DEPOSITO EN CUENTA'},{value:8,text:'CARTAS DE CREDITO'},{value:9,text:'SIGEP'},{value:6,text:'CARTAS DE CREDITO'}],
+            pago:[{value:1,text:'CHEQUE'},{value:2,text:'TRANSFERENCIA ENTRE ENTIDADES FINANCIERAS(ACH)'},{value:4,text:'QR'},{value:5,text:'BILLETERA MOVIL'},{value:6,text:'TARJETA DEBITO/CREDITO'},{value:7,text:'DEPOSITO EN CUENTA'},{value:8,text:'CARTAS DE CREDITO'},{value:9,text:'SIGEP'},{value:6,text:'CARTAS DE CREDITO'},{value:7,text:'EFECTIVO'}],
         }
     },
     mounted(){  

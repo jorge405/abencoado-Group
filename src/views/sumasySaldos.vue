@@ -4,6 +4,11 @@ import api from '@/services/api.js';
 import Swal from 'sweetalert2';
 import CryptoJS from 'crypto-js';
 import Cookies from 'js-cookie';
+import sumasYsaldosPDF from '@/components/sumasYsaldosPDF.vue';
+import sumasYsaldosEXCEL from '@/components/sumasYsaldosEXCEL.vue';
+import flatPickr from 'vue-flatpickr-component'
+import 'flatpickr/dist/flatpickr.css'
+
 
 const Toast= Swal.mixin({
     toast:true,
@@ -23,20 +28,52 @@ data(){
         headers:['Clase','Grupo','Subgrupo','Cuenta principal','Cuenta analitica','Nombre de Cuenta','Debe','Haber','Saldo Debe', 'Saldo Haber'],
         dataSumaSaldos:[],
         key:'abencoadoGroup',
-        mostrarSumaYSaldo:true
+        mostrarSumaYSaldo:true,
+        nombreEmpresa:'',
+        fecha_inicio:'',
+        fecha_final:'',
+        mostrarConsultarFecha:false,
+        flatpickrTimeConfig:{
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: 'Y-m-d',
+            locale:'es',
+            time_24hr: true,
+            minuteIncrement: 1,
+            wrap: false,
+        },
+        fechadata1:'',
+        fechadata2:'' 
     }
 },
 mounted(){
-    this.sumasYsaldos();
+    const sF1 = sessionStorage.getItem('fechaOne');
+    const sF2 = sessionStorage.getItem('fechaTwo');
+        if (sF1 && sF2 ) {
+            this.fecha_inicio = sF1;
+            this.fecha_final = sF2;
+            
+            this.sumasYsaldos();
+        }
 },
 methods:{
     async sumasYsaldos(){
-         const decryptEmpresa=CryptoJS.AES.decrypt(Cookies.get('emp'),this.key).toString(CryptoJS.enc.Utf8); 
-        try {
-            const responseSumasySaldos= await api.post('/getSumasySaldos',{
-                cod_empresa:parseInt(decryptEmpresa)
-            })
+            const nombreEmpresa= CryptoJS.AES.decrypt(Cookies.get('dataEmp'),this.key).toString(CryptoJS.enc.Utf8); 
+            this.nombreEmpresa=nombreEmpresa.toUpperCase();
             
+         const decryptEmpresa=CryptoJS.AES.decrypt(Cookies.get('emp'),this.key).toString(CryptoJS.enc.Utf8); 
+
+         const f1 = this.fecha_inicio || sessionStorage.getItem('fechaOne');
+         const f2 = this.fecha_final || sessionStorage.getItem('fechaTwo');  
+        try {
+            const datos = {
+                    cod_empresa: parseInt(decryptEmpresa),
+                    fecha_inicio:f1,
+                    fecha_final:f2
+                  };
+
+            const responseSumasySaldos= await api.post('/getSumasySaldos',datos)
+            console.log(responseSumasySaldos.data.rows)
             if (responseSumasySaldos.data.status==='vacio') {
                 Toast.fire({
                     icon:'info', 
@@ -63,7 +100,16 @@ methods:{
                     }
                 })
                 this.dataSumaSaldos=arrayRestructurado;
-                
+                this.mostrarConsultarFecha=false;
+                sessionStorage.setItem('fechaOne',f1);
+                sessionStorage.setItem('fechaTwo',f2);
+                       // Aseguramos que las variables locales de Vue tengan el valor
+                        this.fecha_inicio = f1;
+                        this.fecha_final = f2;
+                const resultado = this.fecha_inicio.split('-').reverse().join('-').replace(/-(\d{2})-/, (match, m) => `-${new Date(0, m - 1).toLocaleString('es', { month: 'long' })}-`).split('-').reverse().join('-');
+                        this.fechadata1= resultado.split('-')
+                        const resultado2=this.fecha_final.split('-').reverse().join('-').replace(/-(\d{2})-/, (match, m) => `-${new Date(0, m - 1).toLocaleString('es', { month: 'long' })}-`).split('-').reverse().join('-');
+                        this.fechadata2=resultado2.split('-')        
             }
         } catch (error) {
             console.log('ha ocurido un error en el servidor: ',error);
@@ -80,6 +126,9 @@ methods:{
     MostrarBalanceGeneral(){
         this.$router.push('/balanceGeneral');
         this.mostrarSumaYSaldo=false;
+    },
+    cerrarModalfecha(){
+        this.mostrarConsultarFecha=false;
     }
 },
 computed: {
@@ -116,7 +165,10 @@ computed: {
 }
 },
 components:{
-    sidebar
+    sidebar,
+    sumasYsaldosPDF,
+    sumasYsaldosEXCEL,
+    flatPickr
 }
 
 
@@ -133,10 +185,10 @@ components:{
 <div class=" flex flex-col ml-45" v-if="mostrarSumaYSaldo">
     
     <div class="flex flex-row space-x-5">
-        <p class="text-slate-900 text-sm font-Nunito">Del 1 de enero de 2025 al 31 de diciembre de 2025</p>
+        <p class=" text-slate-900 text-sm font-Nunito">Del {{ fechadata1[2] }} de {{fechadata1[1]}} de {{ fechadata1[0] }} al {{fechadata2[2]}} de {{fechadata2[1]}} de {{fechadata2[0]}}</p>
     </div>
     
-    <div class=" flex bg-gray-100 w-7xl min-h-11/12 2xl:w-7xl 2xl:h-10/12 mb-5 rounded-lg p-8 ">
+    <div class=" flex bg-gray-100 w-7xl h-fit 2xl:w-7xl 2xl:h-fit mb-5 rounded-lg p-8 ">
         
         <!-- tabla lista libro mayor-->
         <div class="flex flex-col bg-gray-100 border border-gray-200 w-6xl min-h-11/12 mt-5  p-4 rounded-lg">
@@ -201,7 +253,9 @@ components:{
             <div class="grid grid-cols-2 w-full mt-8">
                 
                 <div class="flex flex-row px-3 space-x-2 items-end">
-                    <button  class=" flex flex-row items-center justify-center w-40 h-10 cursor-pointer bg-blue-950 text-white font-Nunito p-1.5 text-xs font-bold rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"><path fill="#568cf1" d="M8 21q-.825 0-1.412-.587T6 19v-2H4q-.825 0-1.412-.587T2 15v-4q0-1.275.875-2.137T5 8h14q1.275 0 2.138.863T22 11v4q0 .825-.587 1.413T20 17h-2v2q0 .825-.587 1.413T16 21zM18 7H6V5q0-.825.588-1.412T8 3h8q.825 0 1.413.588T18 5zm0 5.5q.425 0 .713-.288T19 11.5t-.288-.712T18 10.5t-.712.288T17 11.5t.288.713t.712.287M8 19h8v-4H8z"/></svg>Imprimir</button>
+                    <sumasYsaldosPDF :datos="dataSumaSaldos" :totales="totalesSumasSaldos" :empresa="nombreEmpresa" :periodo1="fechadata1" :periodo2="fechadata2" ></sumasYsaldosPDF>
+                    <sumasYsaldosEXCEL :datos="dataSumaSaldos" :totales="totalesSumasSaldos" :empresa="nombreEmpresa" ></sumasYsaldosEXCEL>
+                    <button @click="mostrarConsultarFecha=true" class="bg-blue-950 text-white font-Nunito text-sm p-2 w-40 rounded-md uppercase cursor-pointer">Consultar</button>                                    
                 </div>
                 <div class=" flex flex-row space-x-2 items-center justify-end mr-15">
                     <p class=" text-sm font-Nunito text-slate-900">Totales</p>
@@ -218,5 +272,84 @@ components:{
     
 </div>
 
+<!-- modal para consultar por fechas -->
+ <transition enter-active-class="transition duration-300 ease-out"
+                    enter-from-class="opacity-0 scale-95"
+                    enter-to-class="opacity-100 scale-100"
+                    leave-active-class="transition duration-200 ease-in"
+                    leave-from-class="opacity-100 scale-100"
+                    leave-to-class="opacity-0 scale-95">
+        <div v-if="mostrarConsultarFecha" class="fixed inset-0 flex items-center justify-around z-50">
+        <div class="bg-gray-50 bg-opacity-80 text-white  ml-56 w-xl p-6 rounded-lg shadow-2xl flex flex-col space-x-2">
+            <p class=" text-slate-900 font-Nunito text-md font-bold mb-5 mx-auto">CONSULTAR SUMAS Y SALDOS</p>
+            <div class="flex flex-col">
+                <div class="flex flex-col">
+                    <form  @submit.prevent="sumasYsaldos">
+                    
+                    <div class=" flex flex-row space-x-4 mb-5">
+                        <div class=" flex flex-row items-center">
+                        <label for="" class=" font-Nunito text-sm font-semibold text-slate-900 ">De:</label>
+                            <div class="flex flex-row relative ml-2">
+                                <flat-pickr
+                                v-model="fecha_inicio"
+                                :config="flatpickrConfig"
+                                class="  appearance-none rounded-xl border border-gray-300  bg-white p-2.5   text-sm text-slate-800 shadow-theme-xs placeholder:text-gray-700 focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10"
+                                placeholder="ingrese fecha"/>
+                                <span
+                                class="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
+                                <svg
+                                class="fill-current"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 20 20"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                fill-rule="evenodd"
+                                clip-rule="evenodd"
+                                d="M6.66659 1.5415C7.0808 1.5415 7.41658 1.87729 7.41658 2.2915V2.99984H12.5833V2.2915C12.5833 1.87729 12.919 1.5415 13.3333 1.5415C13.7475 1.5415 14.0833 1.87729 14.0833 2.2915V2.99984L15.4166 2.99984C16.5212 2.99984 17.4166 3.89527 17.4166 4.99984V7.49984V15.8332C17.4166 16.9377 16.5212 17.8332 15.4166 17.8332H4.58325C3.47868 17.8332 2.58325 16.9377 2.58325 15.8332V7.49984V4.99984C2.58325 3.89527 3.47868 2.99984 4.58325 2.99984L5.91659 2.99984V2.2915C5.91659 1.87729 6.25237 1.5415 6.66659 1.5415ZM6.66659 4.49984H4.58325C4.30711 4.49984 4.08325 4.7237 4.08325 4.99984V6.74984H15.9166V4.99984C15.9166 4.7237 15.6927 4.49984 15.4166 4.49984H13.3333H6.66659ZM15.9166 8.24984H4.08325V15.8332C4.08325 16.1093 4.30711 16.3332 4.58325 16.3332H15.4166C15.6927 16.3332 15.9166 16.1093 15.9166 15.8332V8.24984Z"
+                                fill=""/></svg>
+                                </span>
+                            </div>
+                        </div>
+                        <div class=" flex flex-row items-center">
+                        <label for="" class=" font-Nunito text-sm text-slate-900 font-semibold ">Hasta:</label>
+                            <div class="flex flex-row relative ml-2">
+                                <flat-pickr
+                                v-model="fecha_final"
+                                :config="flatpickrConfig"
+                                class=" appearance-none rounded-xl border border-gray-300  bg-white p-2.5   text-sm text-slate-800 shadow-theme-xs placeholder:text-gray-700 focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10"
+                                placeholder="ingrese fecha"/>
+                                <span
+                                class="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
+                                <svg
+                                class="fill-current"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 20 20"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                fill-rule="evenodd"
+                                clip-rule="evenodd"
+                                d="M6.66659 1.5415C7.0808 1.5415 7.41658 1.87729 7.41658 2.2915V2.99984H12.5833V2.2915C12.5833 1.87729 12.919 1.5415 13.3333 1.5415C13.7475 1.5415 14.0833 1.87729 14.0833 2.2915V2.99984L15.4166 2.99984C16.5212 2.99984 17.4166 3.89527 17.4166 4.99984V7.49984V15.8332C17.4166 16.9377 16.5212 17.8332 15.4166 17.8332H4.58325C3.47868 17.8332 2.58325 16.9377 2.58325 15.8332V7.49984V4.99984C2.58325 3.89527 3.47868 2.99984 4.58325 2.99984L5.91659 2.99984V2.2915C5.91659 1.87729 6.25237 1.5415 6.66659 1.5415ZM6.66659 4.49984H4.58325C4.30711 4.49984 4.08325 4.7237 4.08325 4.99984V6.74984H15.9166V4.99984C15.9166 4.7237 15.6927 4.49984 15.4166 4.49984H13.3333H6.66659ZM15.9166 8.24984H4.08325V15.8332C4.08325 16.1093 4.30711 16.3332 4.58325 16.3332H15.4166C15.6927 16.3332 15.9166 16.1093 15.9166 15.8332V8.24984Z"
+                                fill=""/></svg>
+                                </span>
+                            </div>
+                        </div>
+                        
+                    </div>
+                    
+                    <div class=" flex flex-row space-x-4 justify-center">
+                        <button type="submit"  class=" bg-blue-950 w-50  text-sm rounded-lg p-2 cursor-pointer">Aceptar</button>
+                        <button type="button" @click="cerrarModalfecha" class=" bg-red-800 w-50 text-sm rounded-lg p-2 cursor-pointer">Cancelar</button>
+                        
+                    </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    </transition>
 </sidebar>    
 </template>

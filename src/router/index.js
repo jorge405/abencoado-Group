@@ -9,6 +9,7 @@ import libroMayor from '@/views/libroMayor.vue';
 import sumaSaldos from '@/views/sumasySaldos.vue';
 import estadoResultados from '@/views/estadoResultados.vue';
 import balanceGeneral from '@/views/balanceGeneral.vue';
+import evolucionPatrimonio from '@/views/evolucionPatrimonio.vue';
 
 
 const router = createRouter({
@@ -63,6 +64,11 @@ const router = createRouter({
       path:'/balanceGeneral',
       name:'balanceGeneral',
       component:balanceGeneral
+    },
+    {
+      path:'/evolucionPatrimonio',
+      name:'evolucionPatrimonio',
+      component:evolucionPatrimonio
     }
    
     
