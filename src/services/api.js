@@ -19,7 +19,7 @@ const isDev =
 
 const api = axios.create({
   baseURL: isDev ? API_LOCAL : API_PROD,
-  timeout: 5000,
+  timeout: 15000,
 });
 
 // interceptor de respuesta …

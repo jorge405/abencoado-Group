@@ -142,8 +142,34 @@ export default {
                 if (responseConfiguracion.data.status=='vacio') {
                     console.log('vacio')
                 }else if(responseConfiguracion.data.status==='ok'){
-                    console.log(responseConfiguracion.data.rows);
-                    this.listFirmas=responseConfiguracion.data.rows[0].firmas;
+                    const config= responseConfiguracion.data.rows[0];
+                    console.log(config)
+                    
+    
+                    // 1. Extraemos el valor original
+                    let firmasRaw = config.firmas;
+
+                    // 2. Si el valor es un String que empieza con "[", lo parseamos
+                    if (typeof firmasRaw === 'string' && firmasRaw.startsWith('[')) {
+                        try {
+                            this.listFirmas = JSON.parse(firmasRaw);
+                        } catch (e) {
+                            this.listFirmas = [firmasRaw]; // Fallback: meter el string en un array
+                        }
+                    } 
+                    // 3. Si YA es un array, pero el primer elemento es un string JSON (Caso raro de BD)
+                    else if (Array.isArray(firmasRaw) && typeof firmasRaw[0] === 'string' && firmasRaw[0].startsWith('[')) {
+                        try {
+                            this.listFirmas = JSON.parse(firmasRaw[0]);
+                        } catch (e) {
+                            this.listFirmas = firmasRaw;
+                        }
+                    }
+                    // 4. Si ya es un array limpio o cualquier otra cosa
+                    else {
+                        this.listFirmas = Array.isArray(firmasRaw) ? firmasRaw : [firmasRaw];
+                    }
+                    
                     this.mostrarHora=responseConfiguracion.data.rows[0].mostrarHora===1 ? true : false;
                     this.mostrarFecha=responseConfiguracion.data.rows[0].mostrarFecha===1 ? true : false; 
                     
@@ -190,6 +216,28 @@ export default {
             this.modalFirmas=false;
             this.agregaFirmas=[];
         },
+        limpiarFirmas(datos) {
+        if (!datos) return [];
+        
+        try {
+            let resultado = datos;
+            // Si es un string, lo parseamos (hasta 2 veces por si hay doble serialización)
+            while (typeof resultado === 'string') {
+                resultado = JSON.parse(resultado);
+            }
+            
+            // Si el resultado final es un array, lo devolvemos
+            if (Array.isArray(resultado)) {
+                return resultado;
+            }
+            
+            // Si es un solo elemento, lo metemos en un array
+            return [resultado];
+        } catch (e) {
+            // Si falla el parseo (es un string normal), devolvemos el valor original en un array
+            return Array.isArray(datos) ? datos : [datos];
+        }
+    },
         async actualizarConfiguracion(){
             try {
                 const responseConfiguracion= await api.patch('/updateConfiguracion',{
@@ -275,7 +323,8 @@ export default {
             }
             // Si no se puede formatear, devuelve la cadena original
             return String(this.fecha_inscripcion);
-        }
+        },
+        
     },
     components:{
         sidebar
@@ -457,7 +506,7 @@ export default {
                         <div class="flex flex-row space-x-4 items-center mt-4">
                             <span class="font-Nunito text-sm text-slate-900 flex flex-row items-center space-x-4 ">Firmas:
                             <ul class="flex flex-row space-x-2 items-center">
-                                <li v-for="(firma, index) in listFirmas" :key="index" class=" flex flex-row space-x-2 text-white text-xs p-2 bg-blue-950 rounded-lg mr-2 ml-2 lowercase">
+                                <li v-for="(firma, index) in limpiarFirmas(listFirmas)" :key="'firma-'+index" class=" flex flex-row space-x-2 text-white text-xs p-2 bg-blue-950 rounded-lg mr-2 ml-2 lowercase">
                                     {{ firma }}<span @click="EliminarFirmas(index)" class=" bg-red-800 rounded-full text-xs p-1.5 cursor-pointer text-white flex flex-row justify-center items-center" ><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"><rect width="24" height="24" fill="none"/><path fill="#fff" d="M20 6a1 1 0 0 1 .117 1.993L20 8h-.081L19 19a3 3 0 0 1-2.824 2.995L16 22H8c-1.598 0-2.904-1.249-2.992-2.75l-.005-.167L4.08 8H4a1 1 0 0 1-.117-1.993L4 6zm-9.489 5.14a1 1 0 0 0-1.218 1.567L10.585 14l-1.292 1.293l-.083.094a1 1 0 0 0 1.497 1.32L12 15.415l1.293 1.292l.094.083a1 1 0 0 0 1.32-1.497L13.415 14l1.292-1.293l.083-.094a1 1 0 0 0-1.497-1.32L12 12.585l-1.293-1.292l-.094-.083zM14 2a2 2 0 0 1 2 2a1 1 0 0 1-1.993.117L14 4h-4l-.007.117A1 1 0 0 1 8 4a2 2 0 0 1 1.85-1.995L10 2z" stroke-width="0.5" stroke="#fff"/></svg></span> 
                                 </li>
                                 

@@ -262,7 +262,7 @@ export default{
       <div class="flex flex-row flex-wrap justify-center space-x-4 mx-auto mt-32">
           
           <!-- 2. El HIJO tiene el v-for -->
-          <div v-for="(item, index) in firmas" :key="index" class="text-center">
+          <div v-for="(item, index) in (typeof firmas==='string' ? JSON.parse(firmas) : firmas)" :key="index" class="text-center">
               <div class="border-t-2 border-slate-800 w-40 mb-1"></div>
               <p class="text-[10px] font-black text-slate-500 uppercase">{{ item }}</p>
           </div>

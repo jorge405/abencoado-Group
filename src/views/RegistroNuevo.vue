@@ -36,6 +36,7 @@ export default{
             {value:'Pasaje',text:'Pasaje'},
             {value:'Calzada',text:'Calzada'},
         ],
+        tipos:['Comercial','No comercial'],
         actividad_s:'',
         actividad_secundaria:[],
         flatpickrTimeConfig:{
@@ -285,7 +286,7 @@ export default{
 <div class="grid grid-cols-3 gap-x-2 mb-4">
 <div class="flex flex-col">
 <label class=" font-Nunito text-sm text-slate-900 mb-2">Tipo de Empresa</label>
-<select v-model="selected_empresa" class=" p-2 border border-gray-200 rounded-xl placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10  ">
+<select v-model="selected_empresa" class=" text-sm p-2 border border-gray-200 rounded-xl placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10  ">
 <option value="" selected disabled class=" font-Nunito text-sm placeholder:text-sm ">Selecciona tipo empresa</option>
 <option v-for="item in tip_empresa"  :key="item.cod_tpEmpresa" :value="item.tipo_empresa" >{{ item.tipo_empresa }}</option>    
 </select>
@@ -347,7 +348,14 @@ export default{
 <input v-model="nit" type="text" class=" rounded-xl border border-gray-300 p-2 placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10 uppercase placeholder:lowercase" placeholder="ingresa tu Nit ej:786848353">    
 <p v-show="errors.nit" class=" text-xs text-red-600 animate__animated animate__backInUp">!campo obligatorio / numero invalido</p>
 </div>
+<div class="flex flex-col">
+    <label class="text-sm font-Nunito text-slate-900  ">Sector empresa</label>    
+    <select class=" text-sm p-2 border border-gray-200 rounded-xl placeholder:text-sm focus:border-sky-300 focus:outline-hidden focus:ring-3 focus:ring-sky-400/10">    
+    <option value="" disabled selected>Seleccione</option>
+    <option v-for="(item,index) in tipos" :key="index">{{ item }}</option>
+</select>
 
+</div>
 </div> 
 <div class=" flex flex-col mt-4">
     <label class="text-sm font-Nunito text-slate-900 mb-2">Actividad principal</label>     

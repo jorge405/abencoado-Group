@@ -10,6 +10,7 @@ import sumaSaldos from '@/views/sumasySaldos.vue';
 import estadoResultados from '@/views/estadoResultados.vue';
 import balanceGeneral from '@/views/balanceGeneral.vue';
 import evolucionPatrimonio from '@/views/evolucionPatrimonio.vue';
+import inventario from '@/views/inventarios.vue';
 
 
 const router = createRouter({
@@ -69,6 +70,11 @@ const router = createRouter({
       path:'/evolucionPatrimonio',
       name:'evolucionPatrimonio',
       component:evolucionPatrimonio
+    },
+    {
+      path:'/inventario',
+      name:'inventario',
+      component:inventario
     }
    
     

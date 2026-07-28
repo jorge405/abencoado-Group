@@ -243,7 +243,7 @@ export default{
             </div>
             <div class=" flex-1 mt-7 max-h-96 overflow-y-auto">
             
-            <table class="w-full   text-sm text-left text-gray-500">
+            <table class="w-full  text-sm text-left text-gray-500">
                 <!-- Encabezado Dinámico -->
                 <thead class="text-xs font-Nunito text-gray-700 uppercase bg-gray-50 sticky top-0">
                 <tr>

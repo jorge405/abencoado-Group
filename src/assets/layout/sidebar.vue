@@ -121,7 +121,15 @@ export default{
                         
                 </router-link>
         </li>
-        
+        <li>
+                <router-link to="/inventario" class="text-white font-Outfit  transition">
+                        <div class=" flex flex-row items-center">
+                            <span class=" cursor-pointer p-2 rounded-md"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none" /><path fill="currentColor" d="M7 2H3a1 1 0 0 0-1 1v18a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1M5 21a2 2 0 1 1 2-2a2 2 0 0 1-2 2m2-9H3V3h4Zm-1 7a1 1 0 1 1-1-1a1 1 0 0 1 1 1m8-17h-4a1 1 0 0 0-1 1v18a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1m-2 19a2 2 0 1 1 2-2a2 2 0 0 1-2 2m2-9h-4V3h4Zm-1 7a1 1 0 1 1-1-1a1 1 0 0 1 1 1m8-17h-4a1 1 0 0 0-1 1v18a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1m-2 19a2 2 0 1 1 2-2a2 2 0 0 1-2 2m2-9h-4V3h4Zm-1 7a1 1 0 1 1-1-1a1 1 0 0 1 1 1" /></svg></span>
+                            <p class="text-white font-Nunito text-xs">Inventario</p>
+                        </div>
+                        
+                </router-link>
+        </li>
         <li>
                 <router-link to="/perfilEmpresa" class="text-white font-Outfit  transition">
                         <div class=" flex flex-row items-center">
@@ -131,6 +139,7 @@ export default{
                         
                 </router-link>
         </li>                                
+        
 </ul>
 
 </div>

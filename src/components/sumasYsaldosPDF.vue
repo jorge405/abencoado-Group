@@ -19,7 +19,7 @@ export default {
       mostrarHora: 0,
       mostrarFecha: 0
     },
-    firmasDinamicas: []
+    firmasDinamicas:[]
 
      };
   
@@ -33,11 +33,23 @@ export default {
         const responseConfiguracion= await api.get('/getConfiguracion');
         
         if (responseConfiguracion.data.status==='vacio') {
-          
+          this.firmasDinamicas=['CONTADOR','AUX CONTADOR'];
         }else if(responseConfiguracion.data.status==='ok'){
+        const config= responseConfiguracion.data.rows[0];
         this.configImpresion.mostrarHora = responseConfiguracion.data.rows[0].mostrarHora;
         this.configImpresion.mostrarFecha = responseConfiguracion.data.rows[0].mostrarFecha;
-        this.firmasDinamicas = responseConfiguracion.data.rows[0].firmas || ['CONTADOR', 'AUX CONTADOR'];
+
+        let firmasRaw = config.firmas;
+
+          if (typeof firmasRaw === 'string') {
+            try {
+              this.firmasDinamicas = JSON.parse(firmasRaw);
+            } catch (e) {
+              this.firmasDinamicas = [firmasRaw]; // Fallback si no es JSON válido
+            }
+          } else {
+            this.firmasDinamicas = Array.isArray(firmasRaw) ? firmasRaw : ['CONTADOR', 'AUX CONTADOR'];
+          }
         }
       } catch (error) {
         console.log(error)
